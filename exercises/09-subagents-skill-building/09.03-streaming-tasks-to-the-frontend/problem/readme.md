@@ -13,9 +13,9 @@ const tasksResult = await generateObject({
 
 ## Streaming the tasks to the frontend
 
-The main focus is on taking the tasks as they come down and streaming them into the UI. We need to monitor the `tasksResult.partialObjectStream`. Tasks will be streamed down index by index - first the zero-indexed one, then the first-indexed one, and so on. As a reminder for how this works, check out the [reference](/exercises/99-reference/99.1-stream-object-partial-object-stream/explainer/readme.md).
+The main focus is on taking the tasks as they come down and streaming them into the UI. We need to monitor the `tasksResult.partialObjectStream`. Tasks will be streamed down index by index - first the zero-indexed one, then the first-indexed one, and so on. As a reminder for how this works, check out the [reference](/exercises/99-reference/99.01-stream-object-partial-object-stream/explainer/readme.md).
 
-To update the UI properly, we need IDs to reference the parts in the UI. The provided code maps indexes to IDs. As tasks are generated, we iterate over each one, take the index, and if we haven't discovered that index already, we set it to a random UUID. This gives us a static ID we can rely on. As a reminder for how this works, check out the [reference](/exercises/99-reference/99.4-custom-data-parts-id-reconciliation/explainer/readme.md).
+To update the UI properly, we need IDs to reference the parts in the UI. The provided code maps indexes to IDs. As tasks are generated, we iterate over each one, take the index, and if we haven't discovered that index already, we set it to a random UUID. This gives us a static ID we can rely on. As a reminder for how this works, check out the [reference](/exercises/99-reference/99.02-custom-data-parts-id-reconciliation/explainer/readme.md).
 
 ```ts
 const indexToIdMap = new Map<number, string>();

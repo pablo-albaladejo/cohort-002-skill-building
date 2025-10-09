@@ -20,7 +20,7 @@ streamText({
 });
 ```
 
-This is a problem because the model messages don't know anything about our custom data parts - they're for `UIMessage`'s only. Check the [reference](/exercises/99-reference/99.6-ui-messages-vs-model-messages/explainer/readme.md) for a playground to see the differences between model and UI messages.
+This is a problem because the model messages don't know anything about our custom data parts - they're for `UIMessage`'s only. Check the [reference](/exercises/99-reference/99.04-ui-messages-vs-model-messages/explainer/readme.md) for a playground to see the differences between model and UI messages.
 
 ## `getDiary`
 

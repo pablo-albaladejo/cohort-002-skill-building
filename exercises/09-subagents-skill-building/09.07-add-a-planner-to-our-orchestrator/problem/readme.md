@@ -33,7 +33,7 @@ We'll need to monitor the plan's text stream and write it to the client. We'll w
 TODO;
 ```
 
-The reasoning parts work exactly the same as `text-start`, `text-delta`, and `text-end` parts. Check out the [reference](/exercises/99-reference/99.5-streaming-text-parts-by-hand/explainer/readme.md) for more details on streaming text parts.
+The reasoning parts work exactly the same as `text-start`, `text-delta`, and `text-end` parts. Check out the [reference](/exercises/99-reference/99.03-streaming-text-parts-by-hand/explainer/readme.md) for more details on streaming text parts.
 
 ## Displaying the Plan
 

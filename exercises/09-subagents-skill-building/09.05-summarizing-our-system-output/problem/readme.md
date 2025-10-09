@@ -37,7 +37,7 @@ For the second TODO, we need to get that generated text to the client. We have t
 1. Manually writing the text parts
 2. Using `.toUIMessageStream()` and `writer.merge()`
 
-Either will work! For a reminder on how to write text parts, check out the [reference](/exercises/99-reference/99.5-streaming-text-parts-by-hand/explainer/readme.md).
+Either will work! For a reminder on how to write text parts, check out the [reference](/exercises/99-reference/99.03-streaming-text-parts-by-hand/explainer/readme.md).
 
 Good luck, and I'll see you in the solution!
 
@@ -48,7 +48,7 @@ Good luck, and I'll see you in the solution!
   - [ ] Pass the `formattedMessages` and `diary` as part of the prompt
 
 - [ ] Replace the second TODO with code that writes the summary to the client
-  - [ ] Either [manually write text parts](/exercises/99-reference/99.5-streaming-text-parts-by-hand/explainer/readme.md) OR
+  - [ ] Either [manually write text parts](/exercises/99-reference/99.03-streaming-text-parts-by-hand/explainer/readme.md) OR
   - [ ] Use `.toUIMessageStream()` with `writer.merge()`
   - [ ] If using `.toUIMessageStream()`, remember to pass `{ sendStart: false }`
 

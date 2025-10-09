@@ -40,26 +40,26 @@ You can look at the code here in [`utils.ts`](./api/utils.ts):
 const RRF_K = 60;
 
 export function reciprocalRankFusion(
-  rankings: { filename: string; content: string }[][],
-): { filename: string; content: string }[] {
+  rankings: { email: Email; score: number }[][],
+): { email: Email; score: number }[] {
   const rrfScores = new Map<string, number>();
   const documentMap = new Map<
     string,
-    { filename: string; content: string }
+    { email: Email; score: number }
   >();
 
   // Process each ranking list
   rankings.forEach((ranking) => {
     ranking.forEach((doc, rank) => {
       // Get current RRF score for this document
-      const currentScore = rrfScores.get(doc.filename) || 0;
+      const currentScore = rrfScores.get(doc.email.id) || 0;
 
       // Add contribution from this ranking list
       const contribution = 1 / (RRF_K + rank);
-      rrfScores.set(doc.filename, currentScore + contribution);
+      rrfScores.set(doc.email.id, currentScore + contribution);
 
       // Store document reference
-      documentMap.set(doc.filename, doc);
+      documentMap.set(doc.email.id, doc);
     });
   });
 
@@ -76,16 +76,16 @@ In terms of usage, we can call this reciprocal rank fusion passing in the BM25 s
 
 ```ts
 // search.ts
-export const searchTypeScriptDocs = async (opts: {
+export const searchEmails = async (opts: {
   keywordsForBM25: string[];
   embeddingsQuery: string;
 }) => {
-  const bm25SearchResults = await searchTypeScriptDocsViaBM25(
+  const bm25SearchResults = await searchEmailsViaBM25(
     opts.keywordsForBM25,
   );
 
   const embeddingsSearchResults =
-    await searchTypeScriptDocsViaEmbeddings(
+    await searchEmailsViaEmbeddings(
       opts.embeddingsQuery,
     );
 
@@ -98,13 +98,13 @@ export const searchTypeScriptDocs = async (opts: {
 };
 ```
 
-This will give us back a list of documents. We can then take these search results and just clip off the top five or top 10 or however many we fancy, and then just pass those into our LLM.
+This will give us back a list of emails. We can then take these search results and just clip off the top five or top 10 or however many we fancy, and then just pass those into our LLM.
 
 ```ts
 // In chat.ts
 const topSearchResults = searchResults.slice(0, 5);
 
-console.log(topSearchResults.map((result) => result.filename));
+console.log(topSearchResults.map((result) => result.email.subject));
 ```
 
 I recommend you give this a go locally and see if this improves based on the two previous setups we found, and see if there are any test cases that this one passes and the others don't really work on.

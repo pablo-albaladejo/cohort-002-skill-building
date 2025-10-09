@@ -1,51 +1,56 @@
 import path from 'path';
-import { readdir, readFile } from 'fs/promises';
+import { readFile } from 'fs/promises';
 
-export const loadTsDocs = async () => {
-  const TS_DOCS_LOCATION = path.resolve(
+export type Email = {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  timestamp: string;
+  threadId?: string;
+  inReplyTo?: string;
+  references?: string[];
+  labels?: string[];
+  arcId?: string;
+  phaseId?: number;
+};
+
+export const loadEmails = async () => {
+  const EMAILS_LOCATION = path.resolve(
     import.meta.dirname,
-    '../../../../../datasets/ts-docs',
+    '../../../../../datasets/emails.json',
   );
 
-  const files = await readdir(TS_DOCS_LOCATION);
+  const content = await readFile(EMAILS_LOCATION, 'utf8');
+  const emails: Email[] = JSON.parse(content);
 
-  const docs = await Promise.all(
-    files.map(async (file) => {
-      const filePath = path.join(TS_DOCS_LOCATION, file);
-      const content = await readFile(filePath, 'utf8');
-      return {
-        filename: file,
-        content,
-      };
-    }),
-  );
-
-  return new Map(docs.map((doc) => [doc.filename, doc]));
+  return emails;
 };
 
 const RRF_K = 60;
 
 export function reciprocalRankFusion(
-  rankings: { filename: string; content: string }[][],
-): { filename: string; content: string }[] {
+  rankings: { email: Email; score: number }[][],
+): { email: Email; score: number }[] {
   const rrfScores = new Map<string, number>();
   const documentMap = new Map<
     string,
-    { filename: string; content: string }
+    { email: Email; score: number }
   >();
 
   // Process each ranking list
   rankings.forEach((ranking) => {
     ranking.forEach((doc, rank) => {
       // Get current RRF score for this document
-      const currentScore = rrfScores.get(doc.filename) || 0;
+      const currentScore = rrfScores.get(doc.email.id) || 0;
 
       // Add contribution from this ranking list
       const contribution = 1 / (RRF_K + rank);
-      rrfScores.set(doc.filename, currentScore + contribution);
+      rrfScores.set(doc.email.id, currentScore + contribution);
 
       // Store document reference
-      documentMap.set(doc.filename, doc);
+      documentMap.set(doc.email.id, doc);
     });
   });
 

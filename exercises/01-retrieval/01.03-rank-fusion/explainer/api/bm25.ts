@@ -1,23 +1,20 @@
 import BM25 from 'okapibm25';
-import { loadTsDocs } from './utils.ts';
+import { loadEmails, type Email } from './utils.ts';
 
-export const searchTypeScriptDocsViaBM25 = async (
+export const searchEmailsViaBM25 = async (
   keywords: string[],
 ) => {
-  const docs = await loadTsDocs();
-
-  const docsArray = Array.from(docs.values());
+  const emails = await loadEmails();
 
   const scores: number[] = (BM25 as any)(
-    docsArray.map((doc) => doc.content),
+    emails.map((email) => `${email.subject} ${email.body}`),
     keywords,
   );
 
   return scores
     .map((score, index) => ({
       score,
-      filename: docsArray[index]!.filename,
-      content: docsArray[index]!.content,
+      email: emails[index]!,
     }))
     .sort((a, b) => b.score - a.score);
 };

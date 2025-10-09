@@ -1,17 +1,17 @@
-import { searchTypeScriptDocsViaBM25 } from './bm25.ts';
-import { searchTypeScriptDocsViaEmbeddings } from './embeddings.ts';
+import { searchEmailsViaBM25 } from './bm25.ts';
+import { searchEmailsViaEmbeddings } from './embeddings.ts';
 import { reciprocalRankFusion } from './utils.ts';
 
-export const searchTypeScriptDocs = async (opts: {
+export const searchEmails = async (opts: {
   keywordsForBM25: string[];
   embeddingsQuery: string;
 }) => {
-  const bm25SearchResults = await searchTypeScriptDocsViaBM25(
+  const bm25SearchResults = await searchEmailsViaBM25(
     opts.keywordsForBM25,
   );
 
   const embeddingsSearchResults =
-    await searchTypeScriptDocsViaEmbeddings(
+    await searchEmailsViaEmbeddings(
       opts.embeddingsQuery,
     );
 

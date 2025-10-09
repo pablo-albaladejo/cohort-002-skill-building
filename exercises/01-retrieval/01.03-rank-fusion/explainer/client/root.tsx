@@ -9,7 +9,7 @@ const App = () => {
   const { messages, sendMessage } = useChat<MyMessage>({});
 
   const [input, setInput] = useState(
-    `Explain TypeScript generics to me.`,
+    `What did David say about the mortgage application?`,
   );
 
   console.log(messages);

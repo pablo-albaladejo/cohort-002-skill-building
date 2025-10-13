@@ -6,16 +6,86 @@ Automatic memory extraction after each LLM response via `onFinish` callback. Use
 
 ## Steps To Complete
 
-### 1. Define Memory Operations Schema
+### 1. Extract Memory Extraction Function
 
-Create Zod schema for updates, deletions, additions in `onFinish` callback.
+Create reusable `extractMemories()` function for memory operations extraction. Makes logic testable/evaluable in Section 06.
 
-**Implementation (`src/app/api/chat/route.ts`):**
+**Implementation (`src/lib/extract-memories.ts`):**
 
 ```ts
 import { generateObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
+import { DB, loadMemories } from '@/lib/persistence-layer';
+import { UIMessage } from 'ai';
+
+export const memoryOperationsSchema = z.object({
+  updates: z.array(
+    z.object({
+      id: z.string().describe('ID of existing memory to update'),
+      title: z.string().describe('Updated title'),
+      content: z.string().describe('Updated content'),
+    })
+  ).describe('Existing memories to update with new information'),
+  deletions: z.array(z.string()).describe('IDs of memories to delete (outdated/irrelevant)'),
+  additions: z.array(
+    z.object({
+      title: z.string().describe('Title for new memory'),
+      content: z.string().describe('Content for new memory'),
+    })
+  ).describe('New memories to create'),
+});
+
+export type MemoryOperations = z.infer<typeof memoryOperationsSchema>;
+
+export async function extractMemories(opts: {
+  messages: UIMessage[];
+  existingMemories: DB.Memory[];
+}): Promise<MemoryOperations> {
+  const { messages, existingMemories } = opts;
+
+  const memoriesText = existingMemories
+    .map(m => `ID: ${m.id}\nTitle: ${m.title}\nContent: ${m.content}`)
+    .join('\n\n---\n\n');
+
+  const memoriesResult = await generateObject({
+    model: google('gemini-2.0-flash-exp'),
+    schema: memoryOperationsSchema,
+    system: `Analyze conversation and extract memory operations.
+
+<existing-memories>
+${memoriesText || 'No existing memories'}
+</existing-memories>
+
+Guidelines:
+- ADD: User shares new permanent info (preferences, facts, context)
+- UPDATE: User contradicts/refines existing memory
+- DELETE: Memory becomes outdated/irrelevant
+- SKIP: Casual chat, temporary/situational info
+
+Focus on permanent information, not ephemeral conversation details.`,
+    messages,
+  });
+
+  return memoriesResult.object;
+}
+```
+
+**Notes:**
+
+- Extracted function enables evaluation in Section 06
+- Schema exported for reuse
+- Takes messages + existing memories, returns operations
+- Same prompt logic as before
+
+### 2. Use Extracted Function in Route
+
+Call `extractMemories()` in `onFinish` callback.
+
+**Implementation (`src/app/api/chat/route.ts`):**
+
+```ts
+import { extractMemories } from '@/lib/extract-memories';
 import {
   loadMemories,
   createMemory,
@@ -31,68 +101,33 @@ const stream = createUIMessageStream<MyMessage>({
   onFinish: async ({ responseMessage }) => {
     await appendToChatMessages(chatId, [responseMessage]);
 
-    // Load existing memories for context
     const existingMemories = await loadMemories();
-    const memoriesText = existingMemories
-      .map(m => `ID: ${m.id}\nTitle: ${m.title}\nContent: ${m.content}`)
-      .join('\n\n---\n\n');
-
     const allMessages = [...messages, responseMessage];
 
-    const memoriesResult = await generateObject({
-      model: google('gemini-2.0-flash-exp'),
-      schema: z.object({
-        updates: z.array(
-          z.object({
-            id: z.string().describe('ID of existing memory to update'),
-            title: z.string().describe('Updated title'),
-            content: z.string().describe('Updated content'),
-          })
-        ).describe('Existing memories to update with new information'),
-        deletions: z.array(z.string()).describe('IDs of memories to delete (outdated/irrelevant)'),
-        additions: z.array(
-          z.object({
-            title: z.string().describe('Title for new memory'),
-            content: z.string().describe('Content for new memory'),
-          })
-        ).describe('New memories to create'),
-      }),
-      system: `Analyze conversation and extract memory operations.
-
-<existing-memories>
-${memoriesText || 'No existing memories'}
-</existing-memories>
-
-Guidelines:
-- ADD: User shares new permanent info (preferences, facts, context)
-- UPDATE: User contradicts/refines existing memory
-- DELETE: Memory becomes outdated/irrelevant
-- SKIP: Casual chat, temporary/situational info
-
-Focus on permanent information, not ephemeral conversation details.`,
+    const memoryOperations = await extractMemories({
       messages: allMessages,
+      existingMemories,
     });
 
-    console.log('Memory operations:', memoriesResult.object);
+    console.log('Memory operations:', memoryOperations);
   },
 });
 ```
 
 **Notes:**
 
-- Schema defines three operation types: updates (id + title + content), deletions (array of IDs), additions (title + content)
-- Load existing memories for LLM context
-- Pass full conversation history (`allMessages`) for comprehensive analysis
-- System prompt guides permanent vs situational judgment
+- Much cleaner route code
+- Function testable in isolation
+- Prepares for evaluation in 06.01
 
-### 2. Execute Memory Operations
+### 3. Execute Memory Operations
 
 Process extracted operations, handling conflicts between updates and deletions.
 
 **Implementation:**
 
 ```ts
-const { updates, deletions, additions } = memoriesResult.object;
+const { updates, deletions, additions } = memoryOperations;
 
 console.log('Updates:', updates);
 console.log('Deletions:', deletions);
@@ -136,7 +171,7 @@ for (const addition of additions) {
 - Console logs for debugging memory evolution
 - `updateMemory` expects `id` + `title`/`content` (from lesson 4.2)
 
-### 3. Test Automatic Extraction Flow
+### 4. Test Automatic Extraction Flow
 
 Verify LLM extracts memories automatically after each response.
 
@@ -158,7 +193,7 @@ Verify LLM extracts memories automatically after each response.
 - May miss context if prompt not tuned well
 - More token usage than tool approach (04.02)
 
-### 4. Test Edge Cases
+### 5. Test Edge Cases
 
 Verify behavior in complex scenarios.
 

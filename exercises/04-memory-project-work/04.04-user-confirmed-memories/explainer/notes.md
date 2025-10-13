@@ -41,14 +41,12 @@ export type MyMessage = UIMessage<
 
 ### 2. Generate Suggestions in onFinish
 
-Use `generateObject` to analyze conversation, send suggestions as transient data part.
+Use `extractMemories()` function from 04.03, send suggestions as transient data part.
 
 **Implementation (`src/app/api/chat/route.ts`):**
 
 ```ts
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
-import { z } from 'zod';
+import { extractMemories } from '@/lib/extract-memories';
 import { loadMemories } from '@/lib/persistence-layer';
 
 const stream = createUIMessageStream<MyMessage>({
@@ -59,49 +57,15 @@ const stream = createUIMessageStream<MyMessage>({
   onFinish: async ({ responseMessage, writer }) => {
     await appendToChatMessages(chatId, [responseMessage]);
 
-    // Load existing memories for context
     const existingMemories = await loadMemories();
-    const memoriesText = existingMemories
-      .map(m => `ID: ${m.id}\nTitle: ${m.title}\nContent: ${m.content}`)
-      .join('\n\n---\n\n');
-
     const allMessages = [...messages, responseMessage];
 
-    const suggestionsResult = await generateObject({
-      model: google('gemini-2.0-flash-exp'),
-      schema: z.object({
-        updates: z.array(
-          z.object({
-            id: z.string().describe('ID of existing memory to update'),
-            title: z.string().describe('Updated title'),
-            content: z.string().describe('Updated content'),
-          })
-        ).describe('Existing memories to update'),
-        deletions: z.array(z.string()).describe('Memory IDs to delete'),
-        additions: z.array(
-          z.object({
-            title: z.string().describe('Title for new memory'),
-            content: z.string().describe('Content for new memory'),
-          })
-        ).describe('New memories to create'),
-      }),
-      system: `Analyze conversation and suggest memory operations.
-
-<existing-memories>
-${memoriesText || 'No existing memories'}
-</existing-memories>
-
-Guidelines:
-- ADD: User shares new permanent info (preferences, facts, context)
-- UPDATE: User contradicts/refines existing memory
-- DELETE: Memory becomes outdated/irrelevant
-- SKIP: Casual chat, temporary/situational info
-
-Focus on permanent information only.`,
+    const memoryOperations = await extractMemories({
       messages: allMessages,
+      existingMemories,
     });
 
-    const { updates, deletions, additions } = suggestionsResult.object;
+    const { updates, deletions, additions } = memoryOperations;
 
     // Only send suggestions if there are operations to approve
     if (updates.length > 0 || deletions.length > 0 || additions.length > 0) {
@@ -127,10 +91,11 @@ Focus on permanent information only.`,
 
 **Notes:**
 
+- Reuses `extractMemories()` from 04.03 - same logic
 - `onFinish` callback receives `writer` parameter for sending data parts
 - Transient data part sent after response completes
 - Only send if operations exist (avoid empty suggestions)
-- Same analysis logic as 04.03 but doesn't execute automatically
+- Doesn't execute automatically - waits for user approval
 
 ### 3. Handle Transient Data in Chat Component
 

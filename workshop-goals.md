@@ -193,7 +193,15 @@
 
 ## Section 06: Evals Project Work
 
-_Content to be added_
+### [06.01 - Evaluating Memory Extraction](./exercises/06-evals-project-work/06.01-evaluating-memory-tool/explainer/notes.md) (Explainer)
+
+- Test memory extraction from conversation history using Evalite framework
+- Import `extractMemories()` function from project repo (refactored in 04.03)
+- Manual test case creation covering 5 scenarios: casual chat, personal info, contradictions, mixed content, multiple facts
+- Binary scorer: verify memory created/skipped when expected
+- Length scorer: prevent overly long memory content (>500 chars threshold)
+- Foundation for synthetic dataset generation in 06.02
+- Quantify extraction accuracy, catch regressions when changing prompts/models
 
 ## Section 07: Human-in-the-Loop Skill Building
 

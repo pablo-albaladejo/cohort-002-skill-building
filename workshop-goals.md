@@ -191,17 +191,6 @@
 - Prompt engineering for diverse, realistic synthetic data generation
 - Output 12 conversations (3 per scenario) to test memory extraction systems
 
-### [05.03 - Langfuse Observability & Datasets](./exercises/05-evals-skill-building/05.03-langfuse-observability-and-datasets/explainer/readme.md) (Explainer)
-
-- Bridge production monitoring to systematic evaluation workflow
-- Enable OpenTelemetry tracing with `experimental_telemetry: { isEnabled: true }`
-- Group multi-turn conversations using `sessionId` for session tracking
-- Wrap handlers with `observe()` decorator to create Langfuse traces
-- Convert production traces to datasets with ground truth annotations
-- Iterative improvement loop: monitor → dataset → eval → fix → repeat
-- Export Langfuse datasets for Evalite evaluation runs
-- Track performance over time and link eval failures to production traces
-
 ## Section 06: Evals Project Work
 
 _Content to be added_

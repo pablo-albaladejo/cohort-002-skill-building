@@ -5,10 +5,10 @@ Evalite lets you test LLM tool calling behavior. Simplest eval: check if expecte
 Tool calls appear in result's `toolCalls` array. Check if tool exists:
 
 ```ts
-import { evaluate } from 'evalite';
+import { evalite } from 'evalite';
 
-evaluate({
-  data: async () => [
+evalite({
+  data: [
     {
       input: 'What is the weather in SF?',
       expectedTool: 'getWeather',

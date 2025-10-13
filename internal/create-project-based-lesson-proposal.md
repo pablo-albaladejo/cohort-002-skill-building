@@ -28,7 +28,7 @@ The lesson proposal should be in the following format:
 
 ## Learning Goals
 
-A small paragraph of text that describes the learning goals of the lesson.
+A list of learning goals for the lesson.
 
 ## Steps To Complete
 

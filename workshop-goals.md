@@ -132,7 +132,45 @@
 
 ## Section 04: Memory Project Work
 
-_Content to be added_
+### [04.01 - All Memories Upfront](./exercises/04-memory-project-work/04.01-all-memories-upfront/explainer/notes.md) (Explainer)
+
+- Load entire memory DB via `loadMemories()` from persistence layer
+- Format memories as text for LLM consumption
+- Inject all memories into system prompt for full context
+- Simplest approach: no retrieval, no filtering - all context every request
+- Manual memory creation via existing UI (no automatic extraction yet)
+- Understand limitations: doesn't scale, wastes tokens on irrelevant memories
+- Foundation before adding tool-controlled creation and semantic recall
+
+### [04.02 - Tool Call Memory Creation](./exercises/04-memory-project-work/04.02-tool-call-memory-creation/explainer/notes.md) (Explainer)
+
+- Define `createMemory`, `updateMemory`, `deleteMemory` tools with CRUD parameters
+- LLM controls timing: calls tools when user shares/updates personal info
+- Execute handlers call persistence layer functions
+- System prompt guides LLM judgment: permanent vs situational info
+- Real-time memory operations during conversation
+- Transparent approach: tool calls visible in UI
+- Agent decides when to remember, immediate save without user confirmation
+
+### [04.03 - Automatic Memory Creation](./exercises/04-memory-project-work/04.03-automatic-memory-creation/explainer/notes.md) (Explainer)
+
+- Automatic extraction via `onFinish` callback after each response
+- Use `generateObject` to analyze full conversation for memory operations
+- Define Zod schema for updates (id + title + content), deletions (IDs), additions (title + content)
+- System prompt guides permanent vs situational judgment
+- Filter deletions to avoid conflicts with updates
+- Comprehensive approach: analyzes every message automatically
+- Trade-offs: less transparent, extra LLM call per message, higher latency/cost vs tool approach
+
+### [04.04 - User Confirmed Memories](./exercises/04-memory-project-work/04.04-user-confirmed-memories/explainer/notes.md) (Explainer)
+
+- LLM suggests memory operations (create/update/delete) via `generateObject` in `onFinish`
+- Send suggestions as transient data part (`data-memory-suggestions`) for ephemeral approval flow
+- Frontend detects suggestions via `onData` callback, displays alert notification
+- Build approval modal UI showing each suggested operation with approve/reject buttons
+- Execute only user-approved operations via server action calling persistence layer
+- Maximum user control approach: nothing saved without explicit approval
+- Trade-offs: most complex implementation, user friction vs transparency and trust
 
 ## Section 05: Evals Skill Building
 

@@ -21,7 +21,7 @@ evaluate({
       tools: {
         getWeather: tool({
           description: 'Get weather for location',
-          parameters: z.object({
+          inputSchema: z.object({
             location: z.string(),
           }),
           execute: async ({ location }) =>

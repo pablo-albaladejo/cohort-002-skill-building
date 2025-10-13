@@ -57,8 +57,10 @@ const searchSemanticEmails = tool({
     Returns email metadata only (id, subject, from, to, timestamp).
     Use this for broad conceptual searches.
   `,
-  parameters: z.object({
-    query: z.string().describe('Search query for semantic matching'),
+  inputSchema: z.object({
+    query: z
+      .string()
+      .describe('Search query for semantic matching'),
     limit: z
       .number()
       .optional()
@@ -121,13 +123,20 @@ const filterEmails = tool({
     Returns results based on contentLevel parameter.
     Use this for precise filtering by known attributes.
   `,
-  parameters: z.object({
-    from: z.string().optional().describe('Filter by sender email'),
+  inputSchema: z.object({
+    from: z
+      .string()
+      .optional()
+      .describe('Filter by sender email'),
     contains: z
       .string()
       .optional()
       .describe('Filter by keyword in subject or body'),
-    limit: z.number().optional().default(10).describe('Max results'),
+    limit: z
+      .number()
+      .optional()
+      .default(10)
+      .describe('Max results'),
     contentLevel: z
       .enum(['subjectOnly', 'fullContent', 'fullThread'])
       .default('subjectOnly')
@@ -211,7 +220,8 @@ function getThreadForEmail(email: Email, allEmails: Email[]) {
     .filter((e) => e.threadId === email.threadId)
     .sort(
       (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+        new Date(a.timestamp).getTime() -
+        new Date(b.timestamp).getTime(),
     );
 }
 ```
@@ -237,7 +247,7 @@ const getEmailById = tool({
     Fetch full email content by ID.
     Use after scanning metadata to get specific email details.
   `,
-  parameters: z.object({
+  inputSchema: z.object({
     emailId: z.string().describe('Email ID to fetch'),
     includeThread: z
       .boolean()

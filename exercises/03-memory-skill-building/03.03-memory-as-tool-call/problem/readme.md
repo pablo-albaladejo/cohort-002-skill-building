@@ -37,7 +37,7 @@ const result = streamText({
   tools: {
     manageMemories: tool({
       description: '...',
-      parameters: z.object({ updates, deletions, additions }),
+      inputSchema: z.object({ updates, deletions, additions }),
       execute: async ({ updates, deletions, additions }) => {
         // Perform memory operations
       },

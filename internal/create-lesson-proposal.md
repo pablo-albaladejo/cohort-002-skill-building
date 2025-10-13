@@ -38,11 +38,12 @@ Include brief snippets of code for the implementation.
 
 Include notes for things to be mindful of when completing the lesson.
 
-This should be detailed, but still concise.
+This should be detailed, but still concise. Another AI should be able to read the steps and complete the lesson.
 
 </lesson-proposal-format>
 
 <task>
-1. Create a lesson proposal inside the folder of the section you're working on, under `notes.md`.
-2. Once the lesson proposal is done, update @workshop-goals.md with the new information.
+1. Load the relevant parts of the ../ai-personal-assistant repository into your context.
+2. Create a lesson proposal inside the folder of the section you're working on, under `notes.md`.
+3. Once the lesson proposal is done, update @workshop-goals.md with the new information.
 </task>

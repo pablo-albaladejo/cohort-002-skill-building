@@ -69,7 +69,7 @@ const ChunkViewer = () => {
             onChange={setInputValue}
             onSubmit={handleSearchSubmit}
           />
-          {search && <OrderSelector value={orderBy} onChange={setOrderBy} />}
+          <OrderSelector value={orderBy} onChange={setOrderBy} />
           {isLoading ? (
             <div className="flex-shrink-0 border-b border-border bg-background/80 backdrop-blur-sm">
               <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-center">

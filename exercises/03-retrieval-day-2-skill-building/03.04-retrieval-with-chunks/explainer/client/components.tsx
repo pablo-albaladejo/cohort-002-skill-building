@@ -13,8 +13,8 @@ export const Wrapper = (props: {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
       {props.header}
-      <div className="flex-1 overflow-y-auto px-4 py-8 pt-6 scrollbar-thin scrollbar-track-background scrollbar-thumb-muted hover:scrollbar-thumb-muted-foreground">
-        <div className="max-w-7xl mx-auto grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="flex-1 overflow-y-auto py-8 pt-6 scrollbar-thin scrollbar-track-background scrollbar-thumb-muted hover:scrollbar-thumb-muted-foreground">
+        <div className="max-w-7xl mx-auto grid sm:grid-cols-2 xl:grid-cols-3 gap-4 px-4">
           {props.children}
         </div>
       </div>
@@ -41,7 +41,7 @@ export const StatsBar = ({
 }) => {
   return (
     <div className="flex-shrink-0 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span>
             <span className="font-medium text-foreground">
@@ -189,7 +189,7 @@ export const SearchInput = ({
 }) => {
   return (
     <div className="flex-shrink-0 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="max-w-3xl mx-auto px-4 py-3">
+      <div className="max-w-7xl mx-auto py-3 px-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -202,7 +202,7 @@ export const SearchInput = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className={cn(
-              'w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm shadow-sm transition-all',
+              'w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm shadow-sm transition-all max-w-lg',
               'placeholder:text-muted-foreground',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent',
               'hover:border-ring/50',
@@ -225,7 +225,7 @@ export const Pagination = ({
 }) => {
   return (
     <div className="flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-sm">
-      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-center gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -264,7 +264,7 @@ export const OrderSelector = ({
 }) => {
   return (
     <div className="flex-shrink-0 bg-background/80 backdrop-blur-sm">
-      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 py-3 pb-1 flex items-center gap-2">
         <span className="text-xs text-muted-foreground mr-2">
           Order by:
         </span>

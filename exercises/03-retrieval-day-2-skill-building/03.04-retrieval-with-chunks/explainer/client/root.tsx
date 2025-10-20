@@ -7,12 +7,15 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ChunkCard,
+  OrderSelector,
   Pagination,
   SearchInput,
   StatsBar,
   Wrapper,
 } from './components.tsx';
 import './tailwind.css';
+
+type OrderBy = 'rrf' | 'semantic' | 'bm25';
 
 type ChunksResponse = {
   chunks: Array<{
@@ -36,13 +39,15 @@ const ChunkViewer = () => {
   const [inputValue, setInputValue] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [orderBy, setOrderBy] = useState<OrderBy>('rrf');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['chunks', search, page],
+    queryKey: ['chunks', search, page, orderBy],
     queryFn: async () => {
       const params = new URLSearchParams({
         search,
         page: page.toString(),
+        orderBy,
       });
       const res = await fetch(`/api/chunks?${params}`);
       return (await res.json()) as ChunksResponse;
@@ -64,6 +69,7 @@ const ChunkViewer = () => {
             onChange={setInputValue}
             onSubmit={handleSearchSubmit}
           />
+          {search && <OrderSelector value={orderBy} onChange={setOrderBy} />}
           {isLoading ? (
             <div className="flex-shrink-0 border-b border-border bg-background/80 backdrop-blur-sm">
               <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-center">
@@ -107,6 +113,7 @@ const ChunkViewer = () => {
             bm25Score={chunk.bm25Score}
             embeddingScore={chunk.embeddingScore}
             rrfScore={chunk.rrfScore}
+            activeOrder={orderBy}
           />
         ))
       ) : null}

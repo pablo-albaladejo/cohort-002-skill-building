@@ -92,12 +92,14 @@ export const ChunkCard = ({
   bm25Score,
   embeddingScore,
   rrfScore,
+  activeOrder,
 }: {
   index: number;
   content: string;
   bm25Score: number;
   embeddingScore: number;
   rrfScore: number;
+  activeOrder?: 'rrf' | 'semantic' | 'bm25';
 }) => {
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">
@@ -108,24 +110,60 @@ export const ChunkCard = ({
         {rrfScore > 0 && (
           <div className="flex items-center gap-2">
             <span
-              className="text-xs font-mono text-muted-foreground flex items-center"
+              className={cn(
+                'text-xs font-mono flex items-center transition-all',
+                activeOrder === 'bm25'
+                  ? 'text-foreground font-medium'
+                  : 'text-muted-foreground',
+              )}
               title="BM25 Score"
             >
-              <Type className="w-3 h-3 mr-1.5 text-blue-500" />
+              <Type
+                className={cn(
+                  'w-3 h-3 mr-1.5 transition-all',
+                  activeOrder === 'bm25'
+                    ? 'text-blue-400'
+                    : 'text-blue-500',
+                )}
+              />
               {bm25Score.toFixed(1)}
             </span>
             <span
-              className="text-xs font-mono text-muted-foreground flex items-center"
+              className={cn(
+                'text-xs font-mono flex items-center transition-all',
+                activeOrder === 'semantic'
+                  ? 'text-foreground font-medium'
+                  : 'text-muted-foreground',
+              )}
               title="Semantic Score"
             >
-              <Brain className="w-3 h-3 mr-1.5 text-pink-500" />
+              <Brain
+                className={cn(
+                  'w-3 h-3 mr-1.5 transition-all',
+                  activeOrder === 'semantic'
+                    ? 'text-pink-400'
+                    : 'text-pink-500',
+                )}
+              />
               {(embeddingScore * 100).toFixed(1)}%
             </span>
             <span
-              className="text-xs font-mono font-medium text-foreground flex items-center"
+              className={cn(
+                'text-xs font-mono flex items-center transition-all',
+                activeOrder === 'rrf'
+                  ? 'text-foreground font-medium'
+                  : 'text-muted-foreground',
+              )}
               title="Final RRF Score"
             >
-              <Zap className="w-3 h-3 mr-1.5 text-yellow-500" />
+              <Zap
+                className={cn(
+                  'w-3 h-3 mr-1.5 transition-all',
+                  activeOrder === 'rrf'
+                    ? 'text-yellow-400'
+                    : 'text-yellow-500',
+                )}
+              />
               {(rrfScore * 100).toFixed(1)}
             </span>
           </div>
@@ -211,6 +249,60 @@ export const Pagination = ({
           )}
         >
           Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export const OrderSelector = ({
+  value,
+  onChange,
+}: {
+  value: 'rrf' | 'semantic' | 'bm25';
+  onChange: (value: 'rrf' | 'semantic' | 'bm25') => void;
+}) => {
+  return (
+    <div className="flex-shrink-0 bg-background/80 backdrop-blur-sm">
+      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
+        <span className="text-xs text-muted-foreground mr-2">
+          Order by:
+        </span>
+        <button
+          onClick={() => onChange('bm25')}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-md border transition-all flex items-center gap-1.5',
+            value === 'bm25'
+              ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+              : 'bg-card border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          <Type className="w-3 h-3" />
+          BM25
+        </button>
+        <button
+          onClick={() => onChange('semantic')}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-md border transition-all flex items-center gap-1.5',
+            value === 'semantic'
+              ? 'bg-pink-500/20 border-pink-500/50 text-pink-300'
+              : 'bg-card border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          <Brain className="w-3 h-3" />
+          Semantic
+        </button>
+        <button
+          onClick={() => onChange('rrf')}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-md border transition-all flex items-center gap-1.5',
+            value === 'rrf'
+              ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300'
+              : 'bg-card border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          <Zap className="w-3 h-3" />
+          RRF
         </button>
       </div>
     </div>

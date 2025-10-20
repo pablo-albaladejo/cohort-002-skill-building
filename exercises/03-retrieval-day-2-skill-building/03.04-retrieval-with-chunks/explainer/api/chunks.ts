@@ -9,6 +9,7 @@ export const GET = async (req: Request): Promise<Response> => {
     url.searchParams.get('pageSize') || '20',
     10,
   );
+  const orderBy = url.searchParams.get('orderBy') || 'rrf';
 
   let chunksWithScores: ChunkWithScores[] = [];
 
@@ -29,8 +30,19 @@ export const GET = async (req: Request): Promise<Response> => {
     }));
   }
 
-  // Sort by RRF score descending
-  chunksWithScores.sort((a, b) => b.rrfScore - a.rrfScore);
+  // Sort by selected score descending
+  switch (orderBy) {
+    case 'bm25':
+      chunksWithScores.sort((a, b) => b.bm25Score - a.bm25Score);
+      break;
+    case 'semantic':
+      chunksWithScores.sort((a, b) => b.embeddingScore - a.embeddingScore);
+      break;
+    case 'rrf':
+    default:
+      chunksWithScores.sort((a, b) => b.rrfScore - a.rrfScore);
+      break;
+  }
 
   // Calculate stats
   const totalChunks = chunksWithScores.length;

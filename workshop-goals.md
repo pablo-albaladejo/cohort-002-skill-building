@@ -50,15 +50,6 @@
 - Improve semantic search precision
 - Generate both keywords (for BM25) and search query (for embeddings) in single call
 
-### [01.07 - Reranking](./exercises/01-retrieval-skill-building/01.07-reranking/problem/readme.md) (Problem)
-
-- Post-retrieval filtering via reranker LLM
-- Pass top 30 results to reranker, return most relevant IDs only
-- Token optimization: return IDs not full content
-- Format emails with IDs for LLM evaluation
-- Handle potential LLM hallucination of non-existent IDs
-- Trade latency for improved retrieval relevance
-
 ## Section 02: Retrieval Project Work
 
 ### [02.01 - Building Your Own Dataset](./exercises/02-retrieval-project-work/02.01-building-your-own-dataset/explainer/readme.md) (Explainer)
@@ -101,6 +92,50 @@
 - Agent autonomy: semantic vs filter search, metadata scan → targeted retrieval patterns
 
 ## Section 03: Retrieval Day 2 Skill Building
+
+### [03.01 - Chunking Intro](./exercises/03-retrieval-day-2-skill-building/03.01-chunking-intro/explainer/readme.md) (Explainer)
+
+- Why chunking needed: handling irregular datasets vs regular pre-chunked emails
+- Problem: large chunks dominate context window
+- Additional problem: wasteful information in fixed-size chunks
+- Solution: chunk documents into regular sizes for balanced retrieval
+- Foundation for fixed-size and structural chunking approaches
+
+### [03.02 - Fixed Size Chunks](./exercises/03-retrieval-day-2-skill-building/03.02-fixed-size-chunks/explainer/readme.md) (Explainer)
+
+- Token-based chunking with overlap using `TokenTextSplitter`
+- Parameters: chunk size (300 tokens) + overlap (50 tokens)
+- Demo implementation showing document splitting
+- Understand overlap: preserve context across chunk boundaries
+- Prepare for integration with retrieval pipeline
+
+### [03.03 - Fixed Chunks with Retrieval](./exercises/03-retrieval-day-2-skill-building/03.03-fixed-chunks-with-retrieval/problem/readme.md) (Problem)
+
+- Integrate fixed-size chunking with existing retrieval mechanism
+- Apply BM25 keyword search to chunks
+- Embed each chunk separately for semantic search
+- Combine BM25 + embedding results via reciprocal rank fusion
+- Build complete chunked retrieval pipeline
+- Initial implementation (replaced by structural chunking in 03.04)
+
+### [03.04 - Structural Chunking](./exercises/03-retrieval-day-2-skill-building/03.04-structural-chunking/problem/readme.md) (Problem)
+
+- Replace 03.03 fixed-size implementation with document structure-based chunking
+- Chunk by markdown structure: headings, sections, paragraphs
+- Why structural chunking: reduces wasteful information, preserves semantic boundaries
+- Particularly effective for markdown documents
+- Maintain existing BM25 + embeddings + rank fusion integration
+- Compare structural vs fixed-size chunking performance
+
+### [03.05 - Reranking](./exercises/03-retrieval-day-2-skill-building/03.05-reranking/problem/readme.md) (Problem)
+
+- Post-retrieval filtering via reranker LLM (moved from Section 01)
+- Pass top 30 chunk results to reranker, return most relevant IDs only
+- Token optimization: return IDs not full content
+- Format chunks with IDs for LLM evaluation
+- Handle potential LLM hallucination of non-existent IDs
+- Trade latency for improved retrieval relevance
+- Applies reranking to chunked retrieval results
 
 ## Section 04: Retrieval Day 2 Project Work
 

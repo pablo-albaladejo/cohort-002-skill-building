@@ -100,9 +100,13 @@
 - Apply Anthropic prompt template: task context → background data → rules → the ask
 - Agent autonomy: semantic vs filter search, metadata scan → targeted retrieval patterns
 
-## Section 03: Memory Skill Building
+## Section 03: Retrieval Day 2 Skill Building
 
-### [03.01 - Basic Memory Setup](./exercises/03-memory-skill-building/03.01-basic-memory-setup/problem/readme.md) (Problem)
+## Section 04: Retrieval Day 2 Project Work
+
+## Section 05: Memory Skill Building
+
+### [05.01 - Basic Memory Setup](./exercises/05-memory-skill-building/05.01-basic-memory-setup/problem/readme.md) (Problem)
 
 - Load and format existing memories from persistent storage
 - Pass memory context to LLM via system prompt
@@ -111,7 +115,7 @@
 - Save new memories with ID and timestamp metadata
 - Distinguish permanent vs temporary/situational information
 
-### [03.02 - Updating Previous Memories](./exercises/03-memory-skill-building/03.02-updating-previous-memories/problem/readme.md) (Problem)
+### [05.02 - Updating Previous Memories](./exercises/05-memory-skill-building/05.02-updating-previous-memories/problem/readme.md) (Problem)
 
 - Implement memory CRUD operations: updates, deletions, additions
 - Define schemas for memory modifications using Zod
@@ -120,7 +124,7 @@
 - Enable working memory (temporary info) beyond permanent facts
 - Track memory evolution as user preferences change over time
 
-### [03.03 - Memory as Tool Call](./exercises/03-memory-skill-building/03.03-memory-as-tool-call/problem/readme.md) (Problem)
+### [05.03 - Memory as Tool Call](./exercises/05-memory-skill-building/05.03-memory-as-tool-call/problem/readme.md) (Problem)
 
 - Convert automatic `onFinish` callback to agent-controlled tool
 - Give agent decision power over when to memorize
@@ -130,7 +134,7 @@
 - Enable transparent tool calls visible in UI
 - Agent batching: wait for natural conversation end before memorizing
 
-### [03.04 - Semantic Recall on Memories](./exercises/03-memory-skill-building/03.04-semantic-recall-on-memories/explainer/readme.md) (Explainer)
+### [05.04 - Semantic Recall on Memories](./exercises/05-memory-skill-building/05.04-semantic-recall-on-memories/explainer/readme.md) (Explainer)
 
 - Scale memory system beyond loading entire database
 - Query rewriting: generate keywords + search query for memory retrieval
@@ -138,9 +142,9 @@
 - Retrieve top N most relevant memories (10-50) based on conversation context
 - Format and inject retrieved memories into system prompt
 
-## Section 04: Memory Project Work
+## Section 06: Memory Project Work
 
-### [04.01 - All Memories Upfront](./exercises/04-memory-project-work/04.01-all-memories-upfront/explainer/notes.md) (Explainer)
+### [06.01 - All Memories Upfront](./exercises/06-memory-project-work/06.01-all-memories-upfront/explainer/notes.md) (Explainer)
 
 - Load entire memory DB via `loadMemories()` from persistence layer
 - Format memories as text for LLM consumption
@@ -150,7 +154,7 @@
 - Understand limitations: doesn't scale, wastes tokens on irrelevant memories
 - Foundation before adding tool-controlled creation and semantic recall
 
-### [04.02 - Tool Call Memory Creation](./exercises/04-memory-project-work/04.02-tool-call-memory-creation/explainer/notes.md) (Explainer)
+### [06.02 - Tool Call Memory Creation](./exercises/06-memory-project-work/06.02-tool-call-memory-creation/explainer/notes.md) (Explainer)
 
 - Define `createMemory`, `updateMemory`, `deleteMemory` tools with CRUD parameters
 - LLM controls timing: calls tools when user shares/updates personal info
@@ -160,7 +164,7 @@
 - Transparent approach: tool calls visible in UI
 - Agent decides when to remember, immediate save without user confirmation
 
-### [04.03 - Automatic Memory Creation](./exercises/04-memory-project-work/04.03-automatic-memory-creation/explainer/notes.md) (Explainer)
+### [06.03 - Automatic Memory Creation](./exercises/06-memory-project-work/06.03-automatic-memory-creation/explainer/notes.md) (Explainer)
 
 - Automatic extraction via `onFinish` callback after each response
 - Use `generateObject` to analyze full conversation for memory operations
@@ -170,7 +174,7 @@
 - Comprehensive approach: analyzes every message automatically
 - Trade-offs: less transparent, extra LLM call per message, higher latency/cost vs tool approach
 
-### [04.04 - User Confirmed Memories](./exercises/04-memory-project-work/04.04-user-confirmed-memories/explainer/notes.md) (Explainer)
+### [06.04 - User Confirmed Memories](./exercises/06-memory-project-work/06.04-user-confirmed-memories/explainer/notes.md) (Explainer)
 
 - LLM suggests memory operations (create/update/delete) via `generateObject` in `onFinish`
 - Send suggestions as transient data part (`data-memory-suggestions`) for ephemeral approval flow
@@ -180,9 +184,9 @@
 - Maximum user control approach: nothing saved without explicit approval
 - Trade-offs: most complex implementation, user friction vs transparency and trust
 
-## Section 05: Evals Skill Building
+## Section 07: Evals Skill Building
 
-### [05.01 - Evaluating Tool Call Agents](./exercises/05-evals-skill-building/05.01-evaluating-tool-call-agents/problem/readme.md) (Problem)
+### [07.01 - Evaluating Tool Call Agents](./exercises/07-evals-skill-building/07.01-evaluating-tool-call-agents/problem/readme.md) (Problem)
 
 - Test LLM tool calling with Evalite framework
 - Fake tools: getWeather and calculator for testing
@@ -192,7 +196,7 @@
 - Extend to validate tool parameters
 - Foundation for systematic agent testing
 
-### [05.02 - Creating Synthetic Datasets](./exercises/05-evals-skill-building/05.02-creating-synthetic-datasets/problem/readme.md) (Problem)
+### [07.02 - Creating Synthetic Datasets](./exercises/07-evals-skill-building/07.02-creating-synthetic-datasets/problem/readme.md) (Problem)
 
 - Generate realistic evaluation datasets using LLMs to scale testing
 - Use `generateText` for simple output (persona descriptions)
@@ -201,19 +205,19 @@
 - Prompt engineering for diverse, realistic synthetic data generation
 - Output 12 conversations (3 per scenario) to test memory extraction systems
 
-## Section 06: Evals Project Work
+## Section 08: Evals Project Work
 
-### [06.01 - Evaluating Memory Extraction](./exercises/06-evals-project-work/06.01-evaluating-memory-tool/explainer/notes.md) (Explainer)
+### [08.01 - Evaluating Memory Extraction](./exercises/08-evals-project-work/08.01-evaluating-memory-tool/explainer/notes.md) (Explainer)
 
 - Test memory extraction from conversation history using Evalite framework
-- Import `extractMemories()` function from project repo (refactored in 04.03)
+- Import `extractMemories()` function from project repo (refactored in 06.03)
 - Manual test case creation covering 5 scenarios: casual chat, personal info, contradictions, mixed content, multiple facts
 - Binary scorer: verify memory created/skipped when expected
 - Length scorer: prevent overly long memory content (>500 chars threshold)
-- Foundation for synthetic dataset generation in 06.02
+- Foundation for synthetic dataset generation in 08.02
 - Quantify extraction accuracy, catch regressions when changing prompts/models
 
-### [06.02 - Creating Memory Tool Evaluation Dataset](./exercises/06-evals-project-work/06.02-creating-memory-tool-evaluation-dataset/explainer/notes.md) (Explainer)
+### [08.02 - Creating Memory Tool Evaluation Dataset](./exercises/08-evals-project-work/08.02-creating-memory-tool-evaluation-dataset/explainer/notes.md) (Explainer)
 
 - Generate synthetic test cases using `generateObject` with operation-specific prompts
 - Separate generation (`generate-dataset.ts`) from evaluation (`main.ts`) for consistent testing
@@ -221,10 +225,10 @@
 - Reusable generator function produces 8 cases per operation (32 total)
 - Test case schema: conversation turns + existing memories + expected operations
 - 4 separate Evalite suites with operation-specific scorers
-- Scale from 5 manual cases (06.01) to 32 synthetic cases
+- Scale from 5 manual cases (08.01) to 32 synthetic cases
 - Identify which memory operations have low accuracy for prompt tuning
 
-### [06.03 - Evaluating Retrieval](./exercises/06-evals-project-work/06.03-evaluating-retrieval/explainer/notes.md) (Explainer)
+### [08.03 - Evaluating Retrieval](./exercises/08-evals-project-work/08.03-evaluating-retrieval/explainer/notes.md) (Explainer)
 
 - Test retrieval mechanism quality using production dataset
 - Manual dataset analysis: identify 8-10 key factual emails with clear retrieval signals
@@ -235,7 +239,7 @@
 - Focus on mechanism quality, not agent output
 - Catch regressions when changing search implementation or tuning parameters
 
-### [06.04 - Comparing Semantic Search with Agentic Search](./exercises/06-evals-project-work/06.04-comparing-semantic-search-with-agentic-search/explainer/notes.md) (Explainer)
+### [08.04 - Comparing Semantic Search with Agentic Search](./exercises/08-evals-project-work/08.04-comparing-semantic-search-with-agentic-search/explainer/notes.md) (Explainer)
 
 - Comparative evaluation using `evalite.each` for variant comparison
 - Experiment-driven testing: treat eval as experiment comparing two approaches
@@ -247,7 +251,7 @@
 - Identify when agents excel (complex multi-step) vs RAG sufficient (simple lookups)
 - Experimental mindset: discover approach strengths/weaknesses through systematic comparison
 
-### [06.05 - LLM-as-Judge Scorer](./exercises/06-evals-project-work/06.05-llm-as-judge-scorer/explainer/notes.md) (Explainer)
+### [08.05 - LLM-as-Judge Scorer](./exercises/08-evals-project-work/08.05-llm-as-judge-scorer/explainer/notes.md) (Explainer)
 
 - Scale lesson 6.4 experiment with automated scoring via LLM-as-judge
 - Implement factuality scorer comparing generated vs expected answers (inspired by Braintrust)
@@ -259,18 +263,18 @@
 - Understand tradeoffs: cost vs scalability, consistency vs human judgment
 - Prompt engineering best practices: multiple-choice format, low temperature, clear rubric
 
-## Section 07: Human-in-the-Loop Skill Building
+## Section 09: Human-in-the-Loop Skill Building
 
-### [07.01 - HITL Intro](./exercises/07-human-in-the-loop-skill-building/07.01-hitl-intro/explainer/readme.md) (Explainer)
+### [09.01 - HITL Intro](./exercises/09-human-in-the-loop-skill-building/09.01-hitl-intro/explainer/readme.md) (Explainer)
 
 - Balance LLM autonomy vs risk management through human oversight
 - Custom data parts for action lifecycle: `data-action-start`, `data-action-decision`, `data-action-end`
 - Pause execution for human review before performing actions
 - User approval/rejection flow with feedback mechanism
 - Prevent LLM from executing high-impact actions without confirmation
-- Why build HITL yourself: enables extensions like thread-scoped permissions (see 08.03)
+- Why build HITL yourself: enables extensions like thread-scoped permissions (see 10.03)
 
-### [07.02 - Initiating HITL Requests](./exercises/07-human-in-the-loop-skill-building/07.02-initiating-hitl-requests/problem/readme.md) (Problem)
+### [09.02 - Initiating HITL Requests](./exercises/09-human-in-the-loop-skill-building/09.02-initiating-hitl-requests/problem/readme.md) (Problem)
 
 - Define `action-start` custom data part with action metadata (id, type, to, subject, content)
 - Modify tool `execute` to write `data-action-start` instead of performing action
@@ -278,7 +282,7 @@
 - Render email preview UI from `data-action-start` parts
 - Separate tool calling from tool execution for human review
 
-### [07.03 - Approving HITL Requests](./exercises/07-human-in-the-loop-skill-building/07.03-approving-hitl-requests/problem/readme.md) (Problem)
+### [09.03 - Approving HITL Requests](./exercises/09-human-in-the-loop-skill-building/09.03-approving-hitl-requests/problem/readme.md) (Problem)
 
 - Define `action-decision` custom data part with `ActionDecision` discriminated union
 - Track decisions via `actionIdsWithDecisionsMade` set to hide approve/reject buttons
@@ -286,7 +290,7 @@
 - Handle rejection: capture feedback in state, reuse `ChatInput` for reason entry
 - Submit rejection feedback as `data-action-decision` with reason
 
-### [07.04 - Passing Custom Message History to LLM](./exercises/07-human-in-the-loop-skill-building/07.04-passing-custom-message-history-to-the-llm/problem/readme.md) (Problem)
+### [09.04 - Passing Custom Message History to LLM](./exercises/09-human-in-the-loop-skill-building/09.04-passing-custom-message-history-to-the-llm/problem/readme.md) (Problem)
 
 - Fix LLM ignoring user feedback by formatting custom data parts
 - Replace `convertToModelMessages` with `prompt: getDiary(messages)`
@@ -294,7 +298,7 @@
 - Include all message parts (text, action-start, action-decision) in prompt
 - Prompt engineering via custom message formatting for full conversation context
 
-### [07.05 - Processing HITL Requests](./exercises/07-human-in-the-loop-skill-building/07.05-processing-hitl-requests/problem/readme.md) (Problem)
+### [09.05 - Processing HITL Requests](./exercises/09-human-in-the-loop-skill-building/09.05-processing-hitl-requests/problem/readme.md) (Problem)
 
 - Define `action-end` custom data part with action ID and output
 - Implement `findDecisionsToProcess` to match actions with decisions
@@ -302,7 +306,7 @@
 - Return `HITLError` if user hasn't made decision for pending action
 - Update `getDiary` to format `data-action-end` parts for LLM consumption
 
-### [07.06 - Executing HITL Requests](./exercises/07-human-in-the-loop-skill-building/07.06-executing-the-hitl-requests/problem/readme.md) (Problem)
+### [09.06 - Executing HITL Requests](./exercises/09-human-in-the-loop-skill-building/09.06-executing-the-hitl-requests/problem/readme.md) (Problem)
 
 - Execute approved actions inside `createUIMessageStream` loop
 - Create `messagesAfterHitl` copy to append `data-action-end` parts
@@ -310,9 +314,9 @@
 - Handle rejection branch: record rejection in `data-action-end` without executing
 - Pass `messagesAfterHitl` to `getDiary` so LLM sees action outcomes
 
-## Section 08: Human-in-the-Loop Project Work
+## Section 10: Human-in-the-Loop Project Work
 
-### [08.01 - Building Destructive Tools & Integrations](./exercises/08-human-in-the-loop-project-work/08.01-building-the-destructive-tools/explainer/notes.md) (Explainer)
+### [10.01 - Building Destructive Tools & Integrations](./exercises/10-human-in-the-loop-project-work/10.01-building-the-destructive-tools/explainer/notes.md) (Explainer)
 
 - Implement destructive tool handlers (email, GitHub, calendar, todos)
 - Integrate MCP servers for massive action coverage (Zapier: 30k+ actions)
@@ -326,7 +330,7 @@
 - Zapier MCP nuclear option: Gmail, Sheets, Airtable, Salesforce, 8,000 apps
 - 20+ integration ideas across dev tools, communication, automation, finance
 
-### [08.02 - Build the HITL Harness](./exercises/08-human-in-the-loop-project-work/08.02-build-the-hitl-harness/explainer/notes.md) (Explainer)
+### [10.02 - Build the HITL Harness](./exercises/10-human-in-the-loop-project-work/10.02-build-the-hitl-harness/explainer/notes.md) (Explainer)
 
 - Apply Section 07 HITL patterns to real assistant project
 - Define custom data parts: `action-start`, `action-decision`, `action-end`
@@ -339,7 +343,7 @@
 - Track action IDs with decisions to hide buttons after submission
 - System prompt guidance on HITL behavior and action outcomes
 
-### [08.03 - Giving Timed Access to Tools](./exercises/08-human-in-the-loop-project-work/08.03-giving-timed-access-to-tools/explainer/notes.md) (Explainer)
+### [10.03 - Giving Timed Access to Tools](./exercises/10-human-in-the-loop-project-work/10.03-giving-timed-access-to-tools/explainer/notes.md) (Explainer)
 
 - Thread-scoped permission system to reduce approval friction
 - Extend persistence layer: track `grantedPermissions` per chat
@@ -350,72 +354,3 @@
 - Security considerations: thread scope, expiration times, revocation
 - System prompt transparency: inform LLM of pre-approved tools
 - UX patterns: permission badges, clear controls, edge case handling
-
-## Section 09: Subagents Skill Building
-
-### [09.01 - Subagents Intro](./exercises/09-subagents-skill-building/09.01-subagents-intro/explainer/readme.md) (Explainer)
-
-- Subagent architecture overcomes limitations of large monolithic agents
-- Orchestrator agent coordinates specialized subagents for modular task delegation
-- Four specialized agents: todos, student notes, scheduler, song finder
-- Manual agent selection limitation: no cross-agent coordination
-- Persistence layer pattern using JSON files for agent state
-- `stopWhen: stepCountIs(10)` prevents infinite agent loops
-
-### [09.02 - Building a Subagent Orchestrator](./exercises/09-subagents-skill-building/09.02-building-a-subagent-orchestrator/problem/readme.md) (Problem)
-
-- Generate task list via `generateObject` with subagent name and task prompt
-- System prompt defines available subagents and delegation strategy
-- Tasks executed in parallel, inter-dependent work split into multiple tasks
-- Zod schema for typed task array with subagent enum validation
-- Format conversation history for orchestrator context
-- Terminal logging for debugging task generation
-
-### [09.03 - Streaming Tasks to the Frontend](./exercises/09-subagents-skill-building/09.03-streaming-tasks-to-the-frontend/problem/readme.md) (Problem)
-
-- Swap `generateObject` to `streamObject` for progressive UI updates
-- Monitor `partialObjectStream` for index-based task streaming
-- Map task indexes to stable UUIDs for ID reconciliation
-- Define `data-task` custom part type in `MyMessage` for task state
-- Stream tasks to client via `writer.write` with stable IDs
-- Render tasks in UI with `TaskItem` component showing progress
-
-### [09.04 - Running Our Subagents](./exercises/09-subagents-skill-building/09.04-running-our-subagents/problem/readme.md) (Problem)
-
-- Diary data structure (simple string) tracks chronological work log
-- `while` loop with step counter prevents infinite orchestrator loops
-- Execute subagents in parallel via `Promise.all` with task prompts
-- Update UI and diary with task results or errors
-- Pass diary to orchestrator prompt for informed decision-making
-- Preserve task history in message parts for follow-up conversations
-
-### [09.05 - Summarizing Our System Output](./exercises/09-subagents-skill-building/09.05-summarizing-our-system-output/problem/readme.md) (Problem)
-
-- Generate final summary via `streamText` after all tasks complete
-- Use diary and conversation history for coherent user-facing output
-- Stream summary to client via manual text parts or `toUIMessageStream()`
-- `getSummarizeSystemPrompt` provides summarization instructions
-- Write summary using `writer.merge()` for streaming integration
-- Transform raw task outputs into human-readable narrative
-
-### [09.06 - Isolating Subagent Context](./exercises/09-subagents-skill-building/09.06-isolating-subagent-context/problem/readme.md) (Problem)
-
-- Summarize subagent output before writing to diary/UI for context efficiency
-- `summarizeAgentOutput` function with streaming delta callback
-- Track full summary via progressive concatenation of deltas
-- Prevent double-cost token usage by compressing verbose agent chatter
-- Isolated subagent context windows enable longer orchestrator sessions
-- Progressive UI updates during summarization via `onSummaryDelta`
-
-### [09.07 - Add a Planner to Our Orchestrator](./exercises/09-subagents-skill-building/09.07-add-a-planner-to-our-orchestrator/problem/readme.md) (Problem)
-
-- Pre-execution planning improves orchestrator reasoning quality
-- Generate plan via `streamText` with `getPlanSystemPrompt` before loop
-- Stream plan as reasoning parts: `reasoning-start`, `reasoning-delta`, `reasoning-end`
-- Display reasoning parts in grayed-out UI for visual differentiation
-- Store plan in diary to track chronological intent vs execution
-- Planning phase allows better multi-agent coordination and error recovery
-
-## Section 10: Subagents Project Work
-
-_Content to be added_

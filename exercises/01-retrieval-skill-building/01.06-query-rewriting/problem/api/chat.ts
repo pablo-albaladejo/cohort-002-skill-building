@@ -16,6 +16,9 @@ export const POST = async (req: Request): Promise<Response> => {
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
+      // TODO: Change the generateObject call so that it generates a search query in
+      // addition to the keywords. This will be used for semantic search, which will be a
+      // big improvement over passing the entire conversation history.
       const keywords = await generateObject({
         model: google('gemini-2.0-flash-001'),
         system: `You are a helpful email assistant, able to search emails for information.
@@ -33,14 +36,9 @@ export const POST = async (req: Request): Promise<Response> => {
 
       console.dir(keywords.object, { depth: null });
 
-      // TODO: Generate a search query based on the conversation history
-      // This will be used for semantic search, which will be a big
-      // improvement over passing the entire conversation history.
-      const searchQuery = TODO;
-
       const searchResults = await searchEmails({
         keywordsForBM25: keywords.object.keywords,
-        embeddingsQuery: searchQuery,
+        embeddingsQuery: TODO,
       });
 
       const topSearchResults = searchResults.slice(0, 5);

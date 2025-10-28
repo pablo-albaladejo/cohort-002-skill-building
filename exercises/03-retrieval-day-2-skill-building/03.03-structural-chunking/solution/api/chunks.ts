@@ -6,24 +6,20 @@ const splitter = new RecursiveCharacterTextSplitter({
   chunkSize: 2000,
   chunkOverlap: 200,
   separators: [
-    // First, try to split along Markdown headings (starting with level 2)
+    // Chapter markers
     '\n--- CHAPTER ---\n',
+    // Headings (not including h1's)
     '\n## ',
     '\n### ',
     '\n#### ',
     '\n##### ',
     '\n###### ',
-    // Note the alternative syntax for headings (below) is not handled here
-    // Heading level 2
-    // ---------------
-    // End of code block
+    // Code blocks, horizontal lines
     '```\n\n',
-    // Horizontal lines
     '\n\n***\n\n',
     '\n\n---\n\n',
     '\n\n___\n\n',
-    // Note that this splitter doesn't handle horizontal lines defined
-    // by *three or more* of ***, ---, or ___, but this is not handled
+    // Newlines
     '\n\n',
     '\n',
     ' ',

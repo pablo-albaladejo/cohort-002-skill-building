@@ -21,8 +21,6 @@ evalite('Agent Tool Call Evaluation', {
     {
       input: createUIMessageFixture(
         'Send an email to john@example.com with subject "Meeting Tomorrow".',
-        'What should the email say?',
-        "Don't forget our 2pm meeting",
       ),
       expected: { tool: 'sendEmail' },
     },

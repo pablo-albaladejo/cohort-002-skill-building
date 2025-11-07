@@ -3,118 +3,119 @@ import { evalite } from 'evalite';
 import { runAgent } from './agent.ts';
 import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
+import { createUIMessageFixture } from '#shared/create-ui-message-fixture.ts';
 
 evalite.each([
   {
-    name: 'Gemini 2.0 Flash Exp',
+    name: 'Gemini 2.0 Flash',
     input: google('gemini-2.0-flash'),
   },
   {
-    name: 'Gemini 2.0 Flash Thinking',
-    input: google('gemini-2.0-flash-lite'),
-  },
-  {
-    name: 'GPT-4o',
-    input: openai('gpt-4o'),
+    name: 'GPT-4.1 Mini',
+    input: openai('gpt-4.1-mini'),
   },
 ])('Agent Tool Call Evaluation - Adversarial Inputs', {
   data: [
     {
-      input: ['What is the weather in San Francisco right now?'],
+      input: createUIMessageFixture(
+        'What is the weather in San Francisco right now?',
+      ),
       expected: { tool: 'checkWeather' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Create a spreadsheet called "Q4 Sales" with columns for Date, Product, and Revenue',
-      ],
+      ),
       expected: { tool: 'createSpreadsheet' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Send an email to john@example.com with subject "Meeting Tomorrow" and body "Don\'t forget our 2pm meeting"',
-      ],
+      ),
       expected: { tool: 'sendEmail' },
     },
     {
-      input: ['Translate "Hello world" to Spanish'],
+      input: createUIMessageFixture(
+        'Translate "Hello world" to Spanish',
+      ),
       expected: { tool: 'translateText' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Set a reminder for tomorrow at 9am to call the dentist',
-      ],
+      ),
       expected: { tool: 'setReminder' },
     },
     // Edge case: Ambiguous request that could match multiple tools
     {
-      input: ['I need to organize my schedule'],
+      input: createUIMessageFixture(
+        'I need to organize my schedule',
+      ),
       expected: { tool: null }, // Could be searchCalendarEvents, createTask, setReminder
     },
     // Edge case: Very long, complex request with multiple potential actions
     {
-      input: [
+      input: createUIMessageFixture(
         'I need to prepare for a big presentation next week. Can you help me create a spreadsheet to track all the tasks I need to complete, set reminders for the key milestones, search for the latest industry data online, and also check what meetings I have scheduled that might conflict with my preparation time?',
-      ],
+      ),
       expected: { tool: null }, // Multiple valid tools, unclear priority
     },
     // Edge case: Request with missing critical information
     {
-      input: ['Book a flight for next month'],
+      input: createUIMessageFixture(
+        'Book a flight for next month',
+      ),
       expected: { tool: null }, // Missing from, to, specific date
     },
     // Edge case: Conversational input with no action needed
     {
-      input: ['Thanks for your help earlier!'],
+      input: createUIMessageFixture(
+        'Thanks for your help earlier!',
+      ),
       expected: { tool: null },
     },
     // Edge case: Request that sounds like action but is actually a question
     {
-      input: [
+      input: createUIMessageFixture(
         'Can you explain how to create a backup of my files?',
-      ],
+      ),
       expected: { tool: null },
     },
     // Edge case: Overlapping tool functionality
     {
-      input: ['I want to save this information for later'],
+      input: createUIMessageFixture(
+        'I want to save this information for later',
+      ),
       expected: { tool: null }, // Could be createTask, setReminder, or createBackup
     },
     // Edge case: Request with conflicting constraints
     {
-      input: [
+      input: createUIMessageFixture(
         'Send an urgent email but make sure to translate it to Spanish first',
-      ],
+      ),
       expected: { tool: null }, // Requires coordination between tools
     },
     // Edge case: Hypothetical scenario (no action should be taken)
     {
-      input: [
+      input: createUIMessageFixture(
         'What would happen if I sent an email to the whole company?',
-      ],
+      ),
       expected: { tool: null },
     },
     // Edge case: Partial information requiring clarification
     {
-      input: ['Create a reminder'],
+      input: createUIMessageFixture('Create a reminder'),
       expected: { tool: null }, // Missing message and time
     },
     // Edge case: Request that seems tool-related but is actually general knowledge
     {
-      input: [
+      input: createUIMessageFixture(
         "What's the difference between economy and business class on flights?",
-      ],
+      ),
       expected: { tool: null },
     },
   ],
-  task: async (input, model) => {
-    const messages: UIMessage[] = input.map(
-      (message, index) => ({
-        id: String(index + 1),
-        role: index % 2 === 0 ? 'user' : 'assistant',
-        parts: [{ type: 'text', text: message }],
-      }),
-    );
-
+  task: async (messages, model) => {
     const result = runAgent(model, messages, stepCountIs(1));
 
     await result.consumeStream();

@@ -1,8 +1,9 @@
-import { stepCountIs, type UIMessage } from 'ai';
+import { stepCountIs } from 'ai';
 import { evalite } from 'evalite';
 import { runAgent } from './agent.ts';
 import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
+import { createUIMessageFixture } from '#shared/create-ui-message-fixture.ts';
 
 evalite.each([
   {
@@ -10,39 +11,39 @@ evalite.each([
     input: google('gemini-2.0-flash'),
   },
   {
-    name: 'Gemini 2.0 Flash Lite',
-    input: google('gemini-2.0-flash-lite'),
-  },
-  {
-    name: 'GPT-4o',
-    input: openai('gpt-4o'),
+    name: 'GPT-4.1 Mini',
+    input: openai('gpt-4.1-mini'),
   },
 ])('Agent Tool Call Evaluation - Adversarial Inputs', {
   data: [
     {
-      input: ['What is the weather in San Francisco right now?'],
+      input: createUIMessageFixture(
+        'What is the weather in San Francisco right now?',
+      ),
       expected: { tool: 'checkWeather' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Create a spreadsheet called "Q4 Sales" with columns for Date, Product, and Revenue',
-      ],
+      ),
       expected: { tool: 'createSpreadsheet' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Send an email to john@example.com with subject "Meeting Tomorrow" and body "Don\'t forget our 2pm meeting"',
-      ],
+      ),
       expected: { tool: 'sendEmail' },
     },
     {
-      input: ['Translate "Hello world" to Spanish'],
+      input: createUIMessageFixture(
+        'Translate "Hello world" to Spanish',
+      ),
       expected: { tool: 'translateText' },
     },
     {
-      input: [
+      input: createUIMessageFixture(
         'Set a reminder for tomorrow at 9am to call the dentist',
-      ],
+      ),
       expected: { tool: 'setReminder' },
     },
     // TODO: Add 5-10 adversarial test cases to challenge the agent
@@ -57,15 +58,7 @@ evalite.each([
     // - Partial information requiring clarification
     // For cases where NO tool should be called, use: expected: { tool: null }
   ],
-  task: async (input, model) => {
-    const messages: UIMessage[] = input.map(
-      (message, index) => ({
-        id: String(index + 1),
-        role: index % 2 === 0 ? 'user' : 'assistant',
-        parts: [{ type: 'text', text: message }],
-      }),
-    );
-
+  task: async (messages, model) => {
     const result = runAgent(model, messages, stepCountIs(1));
 
     await result.consumeStream();

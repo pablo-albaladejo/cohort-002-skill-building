@@ -61,12 +61,8 @@ evalite.each([
       input: createUIMessageFixture('Compress a file'),
     },
   ],
-  task: async (messages) => {
-    const result = runAgent(
-      google('gemini-2.0-flash'),
-      messages,
-      stepCountIs(1),
-    );
+  task: async (messages, model) => {
+    const result = runAgent(model, messages, stepCountIs(1));
 
     await result.consumeStream();
 

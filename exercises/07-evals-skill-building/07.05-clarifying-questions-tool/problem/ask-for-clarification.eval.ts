@@ -1,7 +1,8 @@
-import { stepCountIs, type UIMessage } from 'ai';
+import { createUIMessageFixture } from '#shared/create-ui-message-fixture.ts';
+import { google } from '@ai-sdk/google';
+import { stepCountIs } from 'ai';
 import { evalite } from 'evalite';
 import { runAgent } from './agent.ts';
-import { google } from '@ai-sdk/google';
 
 evalite('Ask For Clarification Evaluation', {
   // TODO: Add 8-10 test cases with incomplete requests that should trigger
@@ -20,7 +21,21 @@ evalite('Ask For Clarification Evaluation', {
   //
   // Mix different tools and types of missing information
   data: [
-    // TODO: Add your test cases here
+    // Flight booking with missing critical details
+    {
+      input: createUIMessageFixture('Book a flight to Paris'),
+    },
+    // Email with missing recipient details
+    {
+      input: createUIMessageFixture('Send John an email'),
+    },
+    // Invoice creation with no details
+    {
+      input: createUIMessageFixture(
+        'Create an invoice for the client',
+      ),
+    },
+    // TODO: add more test cases here
   ],
   task: async (input) => {
     const result = runAgent(

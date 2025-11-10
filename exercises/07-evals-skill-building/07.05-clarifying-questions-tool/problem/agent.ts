@@ -23,6 +23,7 @@ const tools = {
   //   - options: An array of pre-filled answer choices (array of strings)
   //
   askForClarification: tool({
+    // TODO: Write a description for the tool
     description: '',
     inputSchema: z.object({
       // TODO: Add the schema here

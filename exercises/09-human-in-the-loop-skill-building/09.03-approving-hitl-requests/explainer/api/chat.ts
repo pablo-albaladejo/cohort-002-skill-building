@@ -79,7 +79,7 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Email sent';
+              return 'Requested to send an email';
             },
           },
         },

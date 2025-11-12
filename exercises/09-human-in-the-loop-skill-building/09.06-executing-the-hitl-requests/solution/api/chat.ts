@@ -154,7 +154,7 @@ export const POST = async (req: Request): Promise<Response> => {
               toolId: tool.id,
               output: {
                 type: tool.type,
-                message: 'Email sent',
+                message: 'Requested to send an email',
               },
             },
           };
@@ -220,7 +220,7 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Email sent';
+              return 'Requested to send an email';
             },
           },
         },

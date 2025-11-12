@@ -6,6 +6,7 @@ import {
   hasToolCall,
   stepCountIs,
   streamText,
+  type ModelMessage,
   type UIMessage,
 } from 'ai';
 import z from 'zod';
@@ -41,9 +42,45 @@ export type MyMessage = UIMessage<
   }
 >;
 
+const annotateMessageHistory = (
+  messages: MyMessage[],
+): ModelMessage[] => {
+  const modelMessages = convertToModelMessages<MyMessage>(
+    messages,
+    {
+      convertDataPart(part) {
+        if (part.type === 'data-approval-request') {
+          return {
+            type: 'text',
+            text: `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
+          };
+        }
+        if (part.type === 'data-approval-decision') {
+          if (part.data.decision.type === 'approve') {
+            return {
+              type: 'text',
+              text: 'The user approved the tool.',
+            };
+          }
+          return {
+            type: 'text',
+            text: `The user rejected the tool: ${part.data.decision.reason}`,
+          };
+        }
+        return part;
+      },
+    },
+  );
+
+  return modelMessages;
+};
+
 export const POST = async (req: Request): Promise<Response> => {
   const body: { messages: MyMessage[] } = await req.json();
   const { messages } = body;
+
+  const annotatedMessageHistory =
+    annotateMessageHistory(messages);
 
   console.dir(messages[messages.length - 1], { depth: null });
 
@@ -56,7 +93,7 @@ export const POST = async (req: Request): Promise<Response> => {
           You will be given a diary of the conversation so far.
           The user's name is "John Doe".
         `,
-        messages: convertToModelMessages(messages),
+        messages: annotatedMessageHistory,
         tools: {
           sendEmail: {
             description: 'Send an email',
@@ -79,7 +116,7 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Email sent';
+              return 'Requested to send an email';
             },
           },
         },

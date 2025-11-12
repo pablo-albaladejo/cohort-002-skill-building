@@ -6,6 +6,7 @@ import {
   hasToolCall,
   stepCountIs,
   streamText,
+  type ModelMessage,
   type UIMessage,
 } from 'ai';
 import z from 'zod';
@@ -41,46 +42,16 @@ export type MyMessage = UIMessage<
   }
 >;
 
-const getDiary = (messages: MyMessage[]): string => {
-  return messages
-    .map((message): string => {
-      return [
-        message.role === 'user'
-          ? '## User Message'
-          : '## Assistant Message',
-        message.parts
-          .map((part): string => {
-            if (part.type === 'text') {
-              return part.text;
-            }
+const annotateMessageHistory = (
+  messages: MyMessage[],
+): ModelMessage[] => {
+  // TODO: Use convertDataPart in the second parameter of convertToModelMessages
+  // to allow the model to read the custom data parts.
+  // Without this, the model will only see the text parts/tool calls.
+  const modelMessages =
+    convertToModelMessages<MyMessage>(messages);
 
-            if (part.type === 'data-approval-request') {
-              if (part.data.tool.type === 'send-email') {
-                return [
-                  'The assistant requested to send an email:',
-                  `To: ${part.data.tool.to}`,
-                  `Subject: ${part.data.tool.subject}`,
-                  `Content: ${part.data.tool.content}`,
-                ].join('\n');
-              }
-
-              return '';
-            }
-
-            if (part.type === 'data-approval-decision') {
-              if (part.data.decision.type === 'approve') {
-                return 'The user approved the tool.';
-              }
-
-              return `The user rejected the tool: ${part.data.decision.reason}`;
-            }
-
-            return '';
-          })
-          .join('\n\n'),
-      ].join('\n\n');
-    })
-    .join('\n\n');
+  return modelMessages;
 };
 
 export const POST = async (req: Request): Promise<Response> => {
@@ -88,6 +59,9 @@ export const POST = async (req: Request): Promise<Response> => {
   const { messages } = body;
 
   console.dir(messages[messages.length - 1], { depth: null });
+
+  const annotatedMessageHistory =
+    annotateMessageHistory(messages);
 
   const stream = createUIMessageStream<MyMessage>({
     execute: async ({ writer }) => {
@@ -98,10 +72,7 @@ export const POST = async (req: Request): Promise<Response> => {
           You will be given a diary of the conversation so far.
           The user's name is "John Doe".
         `,
-        // TODO: change this to use the getDiary function
-        // above. You'll need to use the 'prompt' property
-        // instead of the 'messages' property.
-        messages: convertToModelMessages(messages),
+        messages: annotatedMessageHistory,
         tools: {
           sendEmail: {
             description: 'Send an email',
@@ -124,7 +95,7 @@ export const POST = async (req: Request): Promise<Response> => {
                 },
               });
 
-              return 'Email sent';
+              return 'Requested to send an email';
             },
           },
         },

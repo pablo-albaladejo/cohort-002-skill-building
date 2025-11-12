@@ -55,7 +55,7 @@ export const POST = async (req: Request): Promise<Response> => {
               // sending the email.
               await sendEmail({ to, subject, content });
 
-              return 'Email sent';
+              return 'Requested to send an email';
             },
           },
         },

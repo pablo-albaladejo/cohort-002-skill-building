@@ -17,7 +17,7 @@ tools: {
       // Currently directly sends the email without user confirmation
       await sendEmail({ to, subject, content });
 
-      return 'Email sent';
+      return 'Requested to send an email';
     },
   },
 },

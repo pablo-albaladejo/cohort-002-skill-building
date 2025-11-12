@@ -1,6 +1,6 @@
 import type {
-  Action,
-  ActionDecision,
+  ToolRequiringApproval,
+  ToolApprovalDecision,
   MyMessage,
 } from './chat.ts';
 
@@ -10,8 +10,8 @@ export type HITLError = {
 };
 
 export type HITLDecisionsToProcess = {
-  action: Action;
-  decision: ActionDecision;
+  tool: ToolRequiringApproval;
+  decision: ToolApprovalDecision;
 };
 
 export const findDecisionsToProcess = (opts: {
@@ -28,9 +28,9 @@ export const findDecisionsToProcess = (opts: {
     return [];
   }
 
-  // TODO: Get all the actions from the assistant message
+  // TODO: Get all the tools from the assistant message
   // and return them in an array.
-  const actions = TODO;
+  const tools = TODO;
 
   // TODO: Get all the decisions that the user has made
   // and return them in a map.
@@ -38,13 +38,13 @@ export const findDecisionsToProcess = (opts: {
 
   const decisionsToProcess: HITLDecisionsToProcess[] = [];
 
-  for (const action of actions) {
-    const decision = decisions.get(action.id);
+  for (const tool of tools) {
+    const decision = decisions.get(tool.id);
 
     // TODO: if the decision is not found, return an error -
     // the user should make a decision before continuing.
     //
-    // TODO: if the decision is found, add the action and
+    // TODO: if the decision is found, add the tool and
     // decision to the decisionsToProcess array.
   }
 

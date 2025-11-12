@@ -15,7 +15,7 @@
 
 [`problem/api/chat.ts`](./problem/api/chat.ts)
 
-- Extend `MyMessage` type with `action-start` custom data part
+- Extend `MyMessage` type with `approval-request` custom data part
 - Include: `id`, `type` ("send-email"), `to`, `subject`, `content`
 - `id` critical for future phases to reference this action
 
@@ -24,7 +24,7 @@
 [`problem/api/chat.ts`](./problem/api/chat.ts)
 
 - Replace `sendEmail()` call with `writer.write()` in tool execute
-- Write `data-action-start` part with action details
+- Write `data-approval-request` part with action details
 - Agent now proposes instead of executes
 - Keep return value for tool result
 
@@ -42,7 +42,7 @@
 
 [`problem/client/components.tsx`](./problem/client/components.tsx)
 
-- Check `part.type === 'data-action-start'` in Message component
+- Check `part.type === 'data-approval-request'` in Message component
 - Display email preview: to, subject, content fields
 - Visual formatting shows pending action
 
@@ -55,14 +55,14 @@
 [`solution/api/chat.ts`](./solution/api/chat.ts)
 
 - Extract `Action` type: `id`, `type: 'send-email'`, `to`, `subject`, `content`
-- `MyMessage` data part: `'action-start': { action: Action }`
+- `MyMessage` data part: `'approval-request': { action: Action }`
 - Reusable across future action types
 
 #### Phase 2: Write Action to Stream
 
 [`solution/api/chat.ts`](./solution/api/chat.ts)
 
-- Tool execute: `writer.write({ type: 'data-action-start', data: { action: {...} } })`
+- Tool execute: `writer.write({ type: 'data-approval-request', data: { action: {...} } })`
 - Generate unique `id: crypto.randomUUID()`
 - Include all action props: type, to, subject, content
 - No longer calls `sendEmail()` directly
@@ -79,7 +79,7 @@
 
 [`solution/client/components.tsx`](./solution/client/components.tsx)
 
-- Check `part.type === 'data-action-start'`
+- Check `part.type === 'data-approval-request'`
 - Render preview: "I'm requesting to send an email"
 - Styled card: gray bg, displays to/subject/content
 - Key prop: `part.id` for React reconciliation

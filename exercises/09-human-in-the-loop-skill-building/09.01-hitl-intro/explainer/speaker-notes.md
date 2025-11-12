@@ -35,27 +35,30 @@
 See [`readme.md`](./readme.md) for flow diagram
 
 Three data part types for action lifecycle:
-- `data-action-start`: LLM requests to perform action
-- `data-action-decision`: User approves/rejects with feedback
-- `data-action-end`: Confirms action completed (after approval only)
+
+- `data-approval-request`: LLM requests to perform action
+- `data-approval-decision`: User approves/rejects with feedback
+- `data-approval-end`: Confirms action completed (after approval only)
 
 #### Phase 4: The HITL Flow
 
 Four-step process:
-1. **LLM Initiates**: Creates `data-action-start` when wanting to act
+
+1. **LLM Initiates**: Creates `data-approval-request` when wanting to act
 2. **Human Review**: System pauses, presents action for approval
-3. **User Decision**: Approve or reject via `data-action-decision`, rejection includes feedback reason
-4. **Action Execution**: Only approved actions proceed to `data-action-end` + execution
+3. **User Decision**: Approve or reject via `data-approval-decision`, rejection includes feedback reason
+4. **Action Execution**: Only approved actions proceed to `data-approval-end` + execution
 
 #### Phase 5: Building This Pattern
 
 Next lessons implement full HITL system:
-- 07.02: Initiating requests (action-start)
-- 07.03: Approval/rejection UI (action-decision)
+
+- 07.02: Initiating requests (approval-request)
+- 07.03: Approval/rejection UI (approval-decision)
 - 07.04: Formatting custom parts for LLM context
 - 07.05: Processing decisions and matching actions
 - 07.06: Executing approved actions
 
 ### Next Up
 
-Conceptual foundation complete. Next: implement `data-action-start` by modifying tool execute handlers to pause instead of running immediately.
+Conceptual foundation complete. Next: implement `data-approval-request` by modifying tool execute handlers to pause instead of running immediately.

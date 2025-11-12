@@ -23,7 +23,7 @@ Add permission tracking to `DB.PersistenceData`:
 // src/lib/persistence-layer.ts
 export namespace DB {
   export interface ToolPermission {
-    toolName: string;  // e.g., 'sendEmail', 'createGitHubIssue'
+    toolName: string; // e.g., 'sendEmail', 'createGitHubIssue'
     grantedAt: string;
   }
 
@@ -31,7 +31,7 @@ export namespace DB {
     id: string;
     title: string;
     messages: MyMessage[];
-    grantedPermissions: ToolPermission[];  // Add this
+    grantedPermissions: ToolPermission[]; // Add this
     createdAt: string;
     updatedAt: string;
   }
@@ -39,15 +39,17 @@ export namespace DB {
 
 export async function grantToolPermission(
   chatId: string,
-  toolName: string
+  toolName: string,
 ): Promise<DB.Chat | null> {
   const chats = await loadChats();
-  const chatIndex = chats.findIndex((chat) => chat.id === chatId);
+  const chatIndex = chats.findIndex(
+    (chat) => chat.id === chatId,
+  );
 
   if (chatIndex === -1) return null;
 
   const existing = chats[chatIndex]!.grantedPermissions.find(
-    (p) => p.toolName === toolName
+    (p) => p.toolName === toolName,
   );
 
   if (!existing) {
@@ -67,11 +69,11 @@ export async function grantToolPermission(
 
 ### 2. Update Action Decision Types
 
-Extend `ActionDecision` discriminated union with new type:
+Extend `ToolApprovalDecision` discriminated union with new type:
 
 ```typescript
 // src/app/api/chat/route.ts (or types file)
-export type ActionDecision =
+export type ToolApprovalDecision =
   | { type: 'approve' }
   | { type: 'approve-for-thread'; toolName: string }
   | { type: 'reject'; reason: string };
@@ -86,7 +88,7 @@ Modify HITL processor to skip approval for granted tools:
 ```typescript
 // In findDecisionsToProcess or similar
 export const shouldRequestApproval = (opts: {
-  action: Action;
+  tool: ToolRequiringApproval;
   grantedPermissions: DB.ToolPermission[];
 }): boolean => {
   const { action, grantedPermissions } = opts;
@@ -94,7 +96,9 @@ export const shouldRequestApproval = (opts: {
   // Map action type to tool name
   const toolName = getToolNameFromAction(action);
 
-  return !grantedPermissions.some((p) => p.toolName === toolName);
+  return !grantedPermissions.some(
+    (p) => p.toolName === toolName,
+  );
 };
 ```
 
@@ -107,41 +111,43 @@ const grantedPermissions = chat?.grantedPermissions || [];
 
 // For each tool call
 if (shouldRequestApproval({ action, grantedPermissions })) {
-  // Write data-action-start (requires approval)
+  // Write data-approval-request (requires approval)
   writer.write({
-    type: "data-action-start",
+    type: 'data-approval-request',
     data: { action },
   });
-  return "Action queued for approval";
+  return 'Action queued for approval';
 } else {
   // Execute immediately - permission already granted
   const result = await sendEmail(action);
   writer.write({
-    type: "data-action-end",
+    type: 'data-approval-end',
     data: {
       actionId: action.id,
       output: { type: action.type, message: result },
     },
   });
-  return "Email sent (pre-approved)";
+  return 'Email sent (pre-approved)';
 }
 ```
 
-**Note:** Auto-execution means HITL flow bypassed entirely. LLM still sees action outcome via `data-action-end`.
+**Note:** Auto-execution means HITL flow bypassed entirely. LLM still sees action outcome via `data-approval-end`.
 
 ### 4. Update Frontend Approval UI
 
 Add second button for thread-scoped approval:
 
 ```tsx
-// Frontend component rendering action-start parts
+// Frontend component rendering approval-request parts
 <div className="action-preview">
   <EmailPreview action={action} />
   <div className="flex gap-2">
     <button onClick={() => handleApprove(action.id)}>
       Approve Once
     </button>
-    <button onClick={() => handleApproveForThread(action.id, toolName)}>
+    <button
+      onClick={() => handleApproveForThread(action.id, toolName)}
+    >
       Allow for This Thread
     </button>
     <button onClick={() => handleReject(action.id)}>
@@ -154,15 +160,20 @@ Add second button for thread-scoped approval:
 Handler sends decision with `approve-for-thread` type:
 
 ```typescript
-const handleApproveForThread = (actionId: string, toolName: string) => {
+const handleApproveForThread = (
+  actionId: string,
+  toolName: string,
+) => {
   sendMessage({
-    parts: [{
-      type: "data-action-decision",
-      data: {
-        actionId,
-        decision: { type: "approve-for-thread", toolName },
+    parts: [
+      {
+        type: 'data-approval-decision',
+        data: {
+          actionId,
+          decision: { type: 'approve-for-thread', toolName },
+        },
       },
-    }],
+    ],
   });
 };
 ```
@@ -173,13 +184,16 @@ Handle `approve-for-thread` decision type:
 
 ```typescript
 // In execute function after processing decisions
-for (const { action, decision } of hitlResult) {
-  if (decision.type === 'approve' || decision.type === 'approve-for-thread') {
+for (const { tool, decision } of hitlResult) {
+  if (
+    decision.type === 'approve' ||
+    decision.type === 'approve-for-thread'
+  ) {
     // Execute action
     const result = await sendEmail(action);
 
     writer.write({
-      type: "data-action-end",
+      type: 'data-approval-end',
       data: {
         actionId: action.id,
         output: { type: action.type, message: result },
@@ -204,10 +218,12 @@ Build UI to view/revoke granted permissions:
 // Server action
 export async function revokeToolPermission(
   chatId: string,
-  toolName: string
+  toolName: string,
 ): Promise<boolean> {
   const chats = await loadChats();
-  const chatIndex = chats.findIndex((chat) => chat.id === chatId);
+  const chatIndex = chats.findIndex(
+    (chat) => chat.id === chatId,
+  );
 
   if (chatIndex === -1) return false;
 
@@ -244,21 +260,25 @@ These tools execute immediately without user approval. Use responsibly.`;
 ## Mindful Considerations
 
 **Security implications:**
+
 - Thread-scoped = permissions persist across entire chat history
 - User might forget granted permissions - consider expiry times (e.g., 1 hour)
 - Don't grant destructive tools by default on new threads
 
 **UX patterns:**
+
 - Show badge/indicator when tools have blanket approval
 - Clear permission list in chat settings
 - Consider "always allow" (global) vs "allow for thread" (chat-scoped)
 
 **Edge cases:**
+
 - Multiple actions in single turn - one might have approval, others not
 - Tool parameters change (send to different email) - may still need approval
 - Revocation doesn't affect in-flight actions
 
 **Testing flow:**
+
 1. Request email send → see "Approve Once" + "Allow for This Thread"
 2. Click "Allow for This Thread" → email sends
 3. Request another email → executes immediately, no UI prompt

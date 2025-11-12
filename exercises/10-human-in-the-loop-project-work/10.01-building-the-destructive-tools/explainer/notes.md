@@ -16,41 +16,48 @@ By lesson 8.1, you've built HITL harness (lesson 7). Now: make it useful.
 Goal: give assistant real-world power. Every developer needs different tools. Below = massive list of options.
 
 ### Email & Communication
+
 - **Send emails** - SMTP, Gmail API, SendGrid, Resend
 - **Slack messages** - post to channels, DMs, thread replies
 - **Discord webhooks** - server notifications, bot messages
 - **SMS/WhatsApp** - Twilio API for text messages
 
 ### Task & Project Management
+
 - **Create todos** - Linear, Asana, Todoist, ClickUp
 - **GitHub issues** - create, comment, label, assign
 - **Jira tickets** - create, transition, update fields
 - **Trello cards** - add to boards, move between lists
 
 ### Calendar & Scheduling
+
 - **Google Calendar events** - create, update, cancel
 - **Cal.com bookings** - schedule meetings programmatically
 - **Calendar invites** - send .ics files via email
 
 ### Development Tools
+
 - **GitHub PRs** - create draft PRs, request reviews
 - **Git commits** - commit and push changes
 - **Deploy triggers** - Vercel, Netlify, Railway webhooks
 - **Database writes** - Postgres, MongoDB, Supabase
 
 ### File & Content Operations
+
 - **Filesystem writes** - via MCP filesystem server
 - **Google Docs** - create/update documents
 - **Notion pages** - create pages, update databases
 - **Cloud storage** - S3, GCS uploads
 
 ### AI & Automation
+
 - **Zapier MCP** - 30,000+ actions across 8,000 apps
 - **Make.com webhooks** - automation workflows
 - **n8n** - self-hosted automation
 - **IFTTT** - consumer automation
 
 ### Finance & Commerce
+
 - **Expense tracking** - log to accounting software
 - **Invoice generation** - QuickBooks, Stripe
 - **Payment requests** - PayPal, Venmo APIs
@@ -65,28 +72,29 @@ Most straightforward: npm package + API key.
 
 ```typescript
 // src/lib/tools/email-tools.ts
-import { tool } from "ai";
-import { z } from "zod";
-import { Resend } from "resend";
+import { tool } from 'ai';
+import { z } from 'zod';
+import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmailTool = tool({
-  description: "Send email. Use for user-requested emails, drafts approved by user.",
+  description:
+    'Send email. Use for user-requested emails, drafts approved by user.',
   parameters: z.object({
-    to: z.string().email().describe("Recipient email address"),
-    subject: z.string().describe("Email subject line"),
-    body: z.string().describe("Email body (plain text or HTML)"),
+    to: z.string().email().describe('Recipient email address'),
+    subject: z.string().describe('Email subject line'),
+    body: z.string().describe('Email body (plain text or HTML)'),
   }),
   execute: async ({ to, subject, body }, { writer }) => {
-    // Write data-action-start for HITL approval
+    // Write data-approval-request for HITL approval
     const actionId = crypto.randomUUID();
 
     writer.write({
-      type: "data-action-start",
+      type: 'data-approval-request',
       data: {
         id: actionId,
-        type: "send-email",
+        type: 'send-email',
         to,
         subject,
         content: body,
@@ -105,16 +113,16 @@ export const sendEmailTool = tool({
 
 ```typescript
 // Inside findDecisionsToProcess loop
-if (action.type === "send-email" && decision.approved) {
+if (action.type === 'send-email' && decision.approved) {
   const result = await resend.emails.send({
-    from: "assistant@yourdomain.com",
+    from: 'assistant@yourdomain.com',
     to: action.to,
     subject: action.subject,
     html: action.content,
   });
 
   writer.write({
-    type: "data-action-end",
+    type: 'data-approval-end',
     data: {
       id: action.id,
       output: `Email sent successfully. ID: ${result.id}`,
@@ -128,6 +136,7 @@ if (action.type === "send-email" && decision.approved) {
 MCP = standardized way to connect AI to external tools. Requires MCP client setup.
 
 **Popular MCP Servers:**
+
 - `@modelcontextprotocol/server-filesystem` - read/write files
 - `@modelcontextprotocol/server-github` - GitHub API
 - `@modelcontextprotocol/server-postgres` - database queries
@@ -154,14 +163,14 @@ MCP = standardized way to connect AI to external tools. Requires MCP client setu
 **Connecting in AI SDK:**
 
 ```typescript
-import { anthropic } from "@ai-sdk/anthropic";
-import { generateText } from "ai";
+import { anthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
 
 // Tools automatically discovered from MCP servers
 const result = await generateText({
-  model: anthropic("claude-sonnet-4.5"),
-  prompt: "Create GitHub issue: Bug in auth flow",
-  experimental_toolCall: "auto", // AI SDK v5 MCP support
+  model: anthropic('claude-sonnet-4.5'),
+  prompt: 'Create GitHub issue: Bug in auth flow',
+  experimental_toolCall: 'auto', // AI SDK v5 MCP support
 });
 ```
 
@@ -175,7 +184,7 @@ Combine tool definition with service abstraction.
 
 ```typescript
 // src/lib/services/github-service.ts
-import { Octokit } from "@octokit/rest";
+import { Octokit } from '@octokit/rest';
 
 export class GitHubService {
   private octokit: Octokit;
@@ -226,30 +235,36 @@ export class GitHubService {
 }
 
 // src/lib/tools/github-tools.ts
-import { tool } from "ai";
-import { z } from "zod";
-import { GitHubService } from "../services/github-service";
+import { tool } from 'ai';
+import { z } from 'zod';
+import { GitHubService } from '../services/github-service';
 
 const github = new GitHubService();
 
 export const createGitHubIssueTool = tool({
-  description: "Create GitHub issue in repository. Use for bug reports, feature requests, tasks.",
+  description:
+    'Create GitHub issue in repository. Use for bug reports, feature requests, tasks.',
   parameters: z.object({
-    repo: z.string().describe("Repository in format: owner/repo"),
-    title: z.string().describe("Issue title"),
-    body: z.string().describe("Issue description (markdown)"),
-    labels: z.array(z.string()).optional().describe("Labels to add"),
+    repo: z
+      .string()
+      .describe('Repository in format: owner/repo'),
+    title: z.string().describe('Issue title'),
+    body: z.string().describe('Issue description (markdown)'),
+    labels: z
+      .array(z.string())
+      .optional()
+      .describe('Labels to add'),
   }),
   execute: async ({ repo, title, body, labels }, { writer }) => {
-    const [owner, repoName] = repo.split("/");
+    const [owner, repoName] = repo.split('/');
 
     const actionId = crypto.randomUUID();
 
     writer.write({
-      type: "data-action-start",
+      type: 'data-approval-request',
       data: {
         id: actionId,
-        type: "create-github-issue",
+        type: 'create-github-issue',
         repo,
         title,
         body,
@@ -316,16 +331,20 @@ export async function createTodo(opts: {
 }
 
 // src/lib/tools/todo-tools.ts
-import { tool } from "ai";
-import { z } from "zod";
-import { createTodo } from "@/lib/persistence-layer";
+import { tool } from 'ai';
+import { z } from 'zod';
+import { createTodo } from '@/lib/persistence-layer';
 
 export const addTodoTool = tool({
-  description: "Add todo to user's task list. Use for action items from conversation.",
+  description:
+    "Add todo to user's task list. Use for action items from conversation.",
   parameters: z.object({
-    title: z.string().describe("Todo title (concise)"),
-    description: z.string().describe("Detailed description"),
-    dueDate: z.string().optional().describe("Due date (ISO 8601)"),
+    title: z.string().describe('Todo title (concise)'),
+    description: z.string().describe('Detailed description'),
+    dueDate: z
+      .string()
+      .optional()
+      .describe('Due date (ISO 8601)'),
   }),
   execute: async ({ title, description, dueDate }) => {
     const todo = await createTodo({
@@ -347,6 +366,7 @@ export const addTodoTool = tool({
 ### When to Use HITL
 
 **Destructive actions (require approval):**
+
 - Send emails, messages
 - Create public issues/PRs
 - Charge money
@@ -355,6 +375,7 @@ export const addTodoTool = tool({
 - Schedule meetings
 
 **Safe actions (no approval needed):**
+
 - Search/read operations
 - Local todos/notes
 - Data analysis
@@ -370,14 +391,20 @@ execute: async ({ to, subject, body }, { writer }) => {
 
   try {
     writer.write({
-      type: "data-action-start",
-      data: { id: actionId, type: "send-email", to, subject, body },
+      type: 'data-approval-request',
+      data: {
+        id: actionId,
+        type: 'send-email',
+        to,
+        subject,
+        body,
+      },
     });
 
     return `Email queued for approval`;
   } catch (error) {
     writer.write({
-      type: "data-action-end",
+      type: 'data-approval-end',
       data: {
         id: actionId,
         output: `Error: ${error.message}`,
@@ -387,23 +414,26 @@ execute: async ({ to, subject, body }, { writer }) => {
 
     throw error; // Re-throw for agent handling
   }
-}
+};
 ```
 
 ### Authentication Patterns
 
 **Environment Variables:**
+
 ```typescript
 const apiKey = process.env.RESEND_API_KEY;
-if (!apiKey) throw new Error("RESEND_API_KEY not set");
+if (!apiKey) throw new Error('RESEND_API_KEY not set');
 ```
 
 **OAuth (complex):**
+
 - Store tokens in persistence layer
 - Implement refresh flow
 - Handle expiration gracefully
 
 **API Keys in DB (per-user):**
+
 - Let users add own keys
 - Encrypt at rest
 - Scope permissions tightly
@@ -413,11 +443,13 @@ if (!apiKey) throw new Error("RESEND_API_KEY not set");
 ### 1. Choose Your Integration Stack
 
 **Starter Kit (2-3 tools):**
+
 - Send email (Resend/SMTP)
 - Create GitHub issue (Octokit)
 - Add local todo (persistence layer)
 
 **Power User (5+ tools + MCP):**
+
 - Above +
 - Calendar events (Google Calendar API)
 - Slack messages (Slack SDK)
@@ -462,7 +494,7 @@ export const sendEmailTool = tool({
   description: "...",
   parameters: z.object({...}),
   execute: async (params, { writer }) => {
-    // Write data-action-start
+    // Write data-approval-request
     // Return early (HITL processes later)
   },
 });
@@ -472,7 +504,8 @@ export const createCalendarEventTool = tool({...});
 ```
 
 All destructive tools should:
-1. Write `data-action-start`
+
+1. Write `data-approval-request`
 2. Return description of queued action
 3. NOT execute immediately
 
@@ -481,11 +514,14 @@ All destructive tools should:
 Update `/src/app/api/chat/route.ts`:
 
 ```typescript
-import { sendEmailTool, createGitHubIssueTool } from "@/lib/tools/destructive-tools";
-import { addTodoTool } from "@/lib/tools/todo-tools";
+import {
+  sendEmailTool,
+  createGitHubIssueTool,
+} from '@/lib/tools/destructive-tools';
+import { addTodoTool } from '@/lib/tools/todo-tools';
 
 const result = streamText({
-  model: anthropic("claude-sonnet-4.5"),
+  model: anthropic('claude-sonnet-4.5'),
   messages: convertToModelMessages(messages),
   tools: {
     sendEmail: sendEmailTool,
@@ -505,7 +541,7 @@ In HITL processor (from lesson 7), add handlers:
 for (const { action, decision } of decisionsToProcess) {
   if (!decision.approved) {
     writer.write({
-      type: "data-action-end",
+      type: 'data-approval-end',
       data: {
         id: action.id,
         output: `Action rejected: ${decision.feedback}`,
@@ -516,14 +552,14 @@ for (const { action, decision } of decisionsToProcess) {
 
   // Execute based on action type
   switch (action.type) {
-    case "send-email":
+    case 'send-email':
       const emailResult = await emailService.send({
         to: action.to,
         subject: action.subject,
         body: action.content,
       });
       writer.write({
-        type: "data-action-end",
+        type: 'data-approval-end',
         data: {
           id: action.id,
           output: `Email sent to ${action.to}`,
@@ -531,7 +567,7 @@ for (const { action, decision } of decisionsToProcess) {
       });
       break;
 
-    case "create-github-issue":
+    case 'create-github-issue':
       const issueResult = await githubService.createIssue({
         owner: action.owner,
         repo: action.repo,
@@ -539,7 +575,7 @@ for (const { action, decision } of decisionsToProcess) {
         body: action.body,
       });
       writer.write({
-        type: "data-action-end",
+        type: 'data-approval-end',
         data: {
           id: action.id,
           output: `Issue created: ${issueResult.html_url}`,
@@ -555,6 +591,7 @@ for (const { action, decision } of decisionsToProcess) {
 ### 6. Test Integration Flow
 
 **Test cases:**
+
 1. "Send email to john@example.com about project update"
    - Should queue email for approval
    - Approve → email sends
@@ -624,6 +661,7 @@ Be proactive but never assume. Always confirm destructive actions.`;
 ## Example Conversation Flows
 
 **Email Flow:**
+
 ```
 User: "Send email to sarah@example.com thanking her for the meeting"
 Assistant: I'll draft email to sarah@example.com.
@@ -638,6 +676,7 @@ Assistant: Email sent to sarah@example.com successfully.
 ```
 
 **GitHub Issue Flow:**
+
 ```
 User: "Create issue in myorg/myrepo about broken auth"
 Assistant: I'll create GitHub issue:
@@ -658,6 +697,7 @@ Assistant: Issue created: https://github.com/myorg/myrepo/issues/123
 ```
 
 **Todo Flow (instant):**
+
 ```
 User: "Remind me to review PR #456 tomorrow"
 Assistant: Todo added: "Review PR #456" (due: tomorrow)
@@ -666,30 +706,35 @@ Assistant: Todo added: "Review PR #456" (due: tomorrow)
 ## Additional Integration Ideas
 
 **Data & Analytics:**
+
 - Query Postgres/MySQL via MCP
 - Update Google Sheets rows
 - Log events to Mixpanel/Amplitude
 - Create Airtable records
 
 **DevOps:**
+
 - Trigger CI/CD pipelines
 - Query monitoring (Datadog, Sentry)
 - Update feature flags (LaunchDarkly)
 - Manage infrastructure (Terraform Cloud API)
 
 **CRM & Sales:**
+
 - Create HubSpot contacts
 - Update Salesforce leads
 - Log calls in Close.io
 - Send follow-ups via Intercom
 
 **Content & Media:**
+
 - Generate images (DALL-E, Midjourney)
 - Transcribe audio (Whisper API)
 - Translate text (DeepL)
 - Shorten URLs (Bitly)
 
 **Team Coordination:**
+
 - Create Loom recordings
 - Schedule Zoom meetings
 - Post updates to Teams
@@ -698,6 +743,7 @@ Assistant: Todo added: "Review PR #456" (due: tomorrow)
 ## Next Steps
 
 After implementing tools in 8.1:
+
 - **Lesson 8.2:** Build HITL harness in project (if not done in section 7)
 - **Lesson 8.3:** Implement timed tool access / temporary permissions
 

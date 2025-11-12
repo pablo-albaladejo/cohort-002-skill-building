@@ -3,7 +3,7 @@
 ## Learning Goals
 
 - Apply Section 07 HITL patterns to real assistant project
-- Implement action lifecycle: `data-action-start`, `data-action-decision`, `data-action-end`
+- Implement action lifecycle: `data-approval-request`, `data-approval-decision`, `data-approval-end`
 - Build approval/rejection UI for destructive actions
 - Process HITL decisions and execute approved actions
 - Format custom data parts in conversation diary for LLM context
@@ -18,15 +18,15 @@ Extend `MyMessage` type in `/src/app/api/chat/route.ts`:
 export type MyMessage = UIMessage<
   never,
   {
-    "frontend-action": "refresh-sidebar";
-    "action-start": {
-      action: Action;
+    'frontend-action': 'refresh-sidebar';
+    'approval-request': {
+      tool: ToolRequiringApproval;
     };
-    "action-decision": {
+    'approval-decision': {
       actionId: string;
-      decision: ActionDecision;
+      decision: ToolApprovalDecision;
     };
-    "action-end": {
+    'approval-end': {
       actionId: string;
       output: string;
     };
@@ -37,9 +37,9 @@ export type MyMessage = UIMessage<
 Define action types:
 
 ```typescript
-export type Action = {
+export type ToolRequiringApproval = {
   id: string;
-  type: "send-email" | "create-github-issue" | "create-todo";
+  type: 'send-email' | 'create-github-issue' | 'create-todo';
   // Type-specific fields based on action type
   to?: string;
   subject?: string;
@@ -49,21 +49,21 @@ export type Action = {
   body?: string;
 };
 
-export type ActionDecision =
-  | { type: "approve" }
-  | { type: "reject"; reason: string };
+export type ToolApprovalDecision =
+  | { type: 'approve' }
+  | { type: 'reject'; reason: string };
 ```
 
 **Note:** Action types match destructive tools from 08.01. Extend as needed.
 
-### 2. Modify Tools to Write `data-action-start`
+### 2. Modify Tools to Write `data-approval-request`
 
 Update tool execute handlers (from lesson 08.01) to write action instead of executing:
 
 ```typescript
 // Example: email tool
 export const sendEmailTool = tool({
-  description: "Send email",
+  description: 'Send email',
   parameters: z.object({
     to: z.string(),
     subject: z.string(),
@@ -73,11 +73,11 @@ export const sendEmailTool = tool({
     const actionId = crypto.randomUUID();
 
     writer.write({
-      type: "data-action-start",
+      type: 'data-approval-request',
       data: {
         action: {
           id: actionId,
-          type: "send-email",
+          type: 'send-email',
           to,
           subject,
           content,
@@ -98,7 +98,10 @@ Create `findDecisionsToProcess()` utility:
 
 ```typescript
 type HITLResult =
-  | { action: Action; decision: ActionDecision }[]
+  | {
+      tool: ToolRequiringApproval;
+      decision: ToolApprovalDecision;
+    }[]
   | { status: number; message: string };
 
 export function findDecisionsToProcess({
@@ -111,21 +114,25 @@ export function findDecisionsToProcess({
   // Extract actions from assistant message
   const actions =
     mostRecentAssistantMessage?.parts
-      .filter((p) => p.type === "data-action-start")
-      .map((p) => p.data.action) || [];
+      .filter((p) => p.type === 'data-approval-request')
+      .map((p) => p.data.tool) || [];
 
   // Extract decisions from user message
   const decisions =
     mostRecentUserMessage.parts
-      .filter((p) => p.type === "data-action-decision")
-      .map((p) => ({ actionId: p.data.actionId, decision: p.data.decision })) ||
-    [];
+      .filter((p) => p.type === 'data-approval-decision')
+      .map((p) => ({
+        actionId: p.data.toolId,
+        decision: p.data.decision,
+      })) || [];
 
   if (actions.length === 0) return [];
 
   // Match actions with decisions
   const results = actions.map((action) => {
-    const decision = decisions.find((d) => d.actionId === action.id);
+    const decision = decisions.find(
+      (d) => d.actionId === action.id,
+    );
     if (!decision) {
       return {
         status: 400,
@@ -135,11 +142,14 @@ export function findDecisionsToProcess({
     return { action, decision: decision.decision };
   });
 
-  if (results.some((r) => "status" in r)) {
-    return results.find((r) => "status" in r) as HITLResult;
+  if (results.some((r) => 'status' in r)) {
+    return results.find((r) => 'status' in r) as HITLResult;
   }
 
-  return results as { action: Action; decision: ActionDecision }[];
+  return results as {
+    tool: ToolRequiringApproval;
+    decision: ToolApprovalDecision;
+  }[];
 }
 ```
 
@@ -155,27 +165,27 @@ const [actionIdsWithDecisions, setActionIdsWithDecisions] = useState<Set<string>
 
 // In message rendering loop:
 {message.parts.map((part) => {
-  if (part.type === "data-action-start") {
-    const hasDecision = actionIdsWithDecisions.has(part.data.action.id);
+  if (part.type === "data-approval-request") {
+    const hasDecision = actionIdsWithDecisions.has(part.data.tool.id);
 
     return (
       <div className="bg-gray-900 border rounded p-4">
-        <h3>Action Request: {part.data.action.type}</h3>
+        <h3>Action Request: {part.data.tool.type}</h3>
         {/* Render action details based on type */}
-        {part.data.action.type === "send-email" && (
+        {part.data.tool.type === "send-email" && (
           <>
-            <p>To: {part.data.action.to}</p>
-            <p>Subject: {part.data.action.subject}</p>
-            <pre>{part.data.action.content}</pre>
+            <p>To: {part.data.tool.to}</p>
+            <p>Subject: {part.data.tool.subject}</p>
+            <pre>{part.data.tool.content}</pre>
           </>
         )}
 
         {!hasDecision && (
           <>
-            <button onClick={() => handleApprove(part.data.action)}>
+            <button onClick={() => handleApprove(part.data.tool)}>
               Approve
             </button>
-            <button onClick={() => setRejectingAction(part.data.action)}>
+            <button onClick={() => setRejectingAction(part.data.tool)}>
               Reject
             </button>
           </>
@@ -192,28 +202,31 @@ const [actionIdsWithDecisions, setActionIdsWithDecisions] = useState<Set<string>
 const handleApprove = (action: Action) => {
   sendMessage(
     {
-      text: "", // Empty text OK for data-only message
+      text: '', // Empty text OK for data-only message
       experimental_data: [
         {
-          type: "data-action-decision",
+          type: 'data-approval-decision',
           data: {
             actionId: action.id,
-            decision: { type: "approve" },
+            decision: { type: 'approve' },
           },
         },
       ],
     },
-    { body: { id: chatId } }
+    { body: { id: chatId } },
   );
 
-  setActionIdsWithDecisions((prev) => new Set(prev).add(action.id));
+  setActionIdsWithDecisions((prev) =>
+    new Set(prev).add(action.id),
+  );
 };
 ```
 
 **Rejection handler:** Capture feedback in input, submit as decision:
 
 ```typescript
-const [rejectingAction, setRejectingAction] = useState<Action | null>(null);
+const [rejectingAction, setRejectingAction] =
+  useState<Action | null>(null);
 
 const handleRejectSubmit = (reason: string) => {
   sendMessage(
@@ -221,18 +234,20 @@ const handleRejectSubmit = (reason: string) => {
       text: reason, // Visible feedback for LLM
       experimental_data: [
         {
-          type: "data-action-decision",
+          type: 'data-approval-decision',
           data: {
             actionId: rejectingAction!.id,
-            decision: { type: "reject", reason },
+            decision: { type: 'reject', reason },
           },
         },
       ],
     },
-    { body: { id: chatId } }
+    { body: { id: chatId } },
   );
 
-  setActionIdsWithDecisions((prev) => new Set(prev).add(rejectingAction!.id));
+  setActionIdsWithDecisions((prev) =>
+    new Set(prev).add(rejectingAction!.id),
+  );
   setRejectingAction(null);
 };
 ```
@@ -248,43 +263,45 @@ function getDiary(messages: MyMessage[]): string {
   return messages
     .map((message) => {
       const header =
-        message.role === "user" ? "## User Message" : "## Assistant Message";
+        message.role === 'user'
+          ? '## User Message'
+          : '## Assistant Message';
 
       const parts = message.parts
         .map((part) => {
-          if (part.type === "text") return part.text;
+          if (part.type === 'text') return part.text;
 
-          if (part.type === "data-action-start") {
+          if (part.type === 'data-approval-request') {
             const { action } = part.data;
-            if (action.type === "send-email") {
+            if (action.type === 'send-email') {
               return [
-                "Assistant requested to send email:",
+                'Assistant requested to send email:',
                 `To: ${action.to}`,
                 `Subject: ${action.subject}`,
                 `Content: ${action.content}`,
-              ].join("\n");
+              ].join('\n');
             }
             // Handle other action types
           }
 
-          if (part.type === "data-action-decision") {
+          if (part.type === 'data-approval-decision') {
             const { decision } = part.data;
-            return decision.type === "approve"
-              ? "User approved action."
+            return decision.type === 'approve'
+              ? 'User approved action.'
               : `User rejected: ${decision.reason}`;
           }
 
-          if (part.type === "data-action-end") {
+          if (part.type === 'data-approval-end') {
             return `Action result: ${part.data.output}`;
           }
 
-          return "";
+          return '';
         })
-        .join("\n\n");
+        .join('\n\n');
 
       return `${header}\n\n${parts}`;
     })
-    .join("\n\n");
+    .join('\n\n');
 }
 ```
 
@@ -300,7 +317,7 @@ const stream = createUIMessageStream<MyMessage>({
     // Check for HITL processing
     const mostRecentUserMessage = messages[messages.length - 1];
     const mostRecentAssistantMessage = messages.findLast(
-      (m) => m.role === "assistant"
+      (m) => m.role === 'assistant',
     );
 
     const hitlResult = findDecisionsToProcess({
@@ -308,19 +325,19 @@ const stream = createUIMessageStream<MyMessage>({
       mostRecentAssistantMessage,
     });
 
-    if ("status" in hitlResult) {
+    if ('status' in hitlResult) {
       throw new Error(hitlResult.message);
     }
 
-    // Copy messages array to append action-end parts
+    // Copy messages array to append approval-end parts
     const messagesAfterHitl = structuredClone(messages);
 
     // Execute approved actions
-    for (const { action, decision } of hitlResult) {
-      if (decision.type === "approve") {
+    for (const { tool, decision } of hitlResult) {
+      if (decision.type === 'approve') {
         // Perform actual action based on type
-        let output = "";
-        if (action.type === "send-email") {
+        let output = '';
+        if (action.type === 'send-email') {
           await emailService.send({
             to: action.to!,
             subject: action.subject!,
@@ -331,17 +348,17 @@ const stream = createUIMessageStream<MyMessage>({
         // Handle other action types...
 
         const actionEndPart = {
-          type: "data-action-end" as const,
+          type: 'data-approval-end' as const,
           data: { actionId: action.id, output },
         };
 
         writer.write(actionEndPart);
-        messagesAfterHitl[messagesAfterHitl.length - 1]!.parts.push(
-          actionEndPart
-        );
+        messagesAfterHitl[
+          messagesAfterHitl.length - 1
+        ]!.parts.push(actionEndPart);
       } else {
         const actionEndPart = {
-          type: "data-action-end" as const,
+          type: 'data-approval-end' as const,
           data: {
             actionId: action.id,
             output: `Action cancelled: ${decision.reason}`,
@@ -349,15 +366,15 @@ const stream = createUIMessageStream<MyMessage>({
         };
 
         writer.write(actionEndPart);
-        messagesAfterHitl[messagesAfterHitl.length - 1]!.parts.push(
-          actionEndPart
-        );
+        messagesAfterHitl[
+          messagesAfterHitl.length - 1
+        ]!.parts.push(actionEndPart);
       }
     }
 
     // Continue conversation with updated context
     const result = streamText({
-      model: anthropic("claude-sonnet-4.5"),
+      model: anthropic('claude-sonnet-4.5'),
       prompt: getDiary(messagesAfterHitl), // Use diary instead of messages
       tools: {
         sendEmail: sendEmailTool,
@@ -371,7 +388,7 @@ const stream = createUIMessageStream<MyMessage>({
 });
 ```
 
-**Critical:** Use `messagesAfterHitl` (with `action-end` parts) in `getDiary()`. LLM must see action outcomes.
+**Critical:** Use `messagesAfterHitl` (with `approval-end` parts) in `getDiary()`. LLM must see action outcomes.
 
 ### 7. Update System Prompt
 
@@ -386,7 +403,7 @@ When user requests destructive action:
 3. If approved: action executes, you see result
 4. If rejected: you see feedback, adjust approach
 
-Never assume action succeeded. Wait for action-end result.
+Never assume action succeeded. Wait for approval-end result.
 
 Available tools:
 - sendEmail: requires approval
@@ -421,13 +438,13 @@ User: "Send reminder about TPS reports"
 
 **Note:** Agent sees rejection reason in diary. Can ask clarifying questions.
 
-### 9. Render `data-action-end` Parts (Optional Polish)
+### 9. Render `data-approval-end` Parts (Optional Polish)
 
 Show execution results in UI:
 
 ```typescript
 {
-  part.type === "data-action-end" && (
+  part.type === "data-approval-end" && (
     <div className="text-green-500 text-sm">
       ✓ {part.data.output}
     </div>
@@ -443,13 +460,13 @@ Makes action completion visible to user.
 
 **Error handling:** HITL processor must return error if action has no matching decision. Prevents action execution without approval.
 
-**Message cloning:** Use `structuredClone()` to avoid mutating original messages array. Append `action-end` parts to copy.
+**Message cloning:** Use `structuredClone()` to avoid mutating original messages array. Append `approval-end` parts to copy.
 
-**Tool execution:** Move from immediate execution (lesson 08.01) to deferred execution (this lesson). Tools write action-start, execution happens after approval.
+**Tool execution:** Move from immediate execution (lesson 08.01) to deferred execution (this lesson). Tools write approval-request, execution happens after approval.
 
 **Diary formatting:** LLM doesn't receive `UIMessage` objects. Receives text diary. All custom parts must be formatted as readable text.
 
-**Non-destructive tools:** Todos, search, etc. don't need HITL. Execute immediately. Only destructive tools write action-start.
+**Non-destructive tools:** Todos, search, etc. don't need HITL. Execute immediately. Only destructive tools write approval-request.
 
 **stopWhen:** Use `hasToolCall` instead of `stepCountIs`. Pauses after any tool call. Resumes after user decision.
 

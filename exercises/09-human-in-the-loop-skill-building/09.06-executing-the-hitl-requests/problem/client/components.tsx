@@ -1,6 +1,9 @@
 import React, { type ReactNode } from 'react';
-import type { ActionDecision, MyMessage } from '../api/chat.ts';
-import type { Action } from '../api/chat.ts';
+import type {
+  ToolApprovalDecision,
+  MyMessage,
+} from '../api/chat.ts';
+import type { ToolRequiringApproval } from '../api/chat.ts';
 import ReactMarkdown from 'react-markdown';
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -33,16 +36,16 @@ export const Wrapper = (props: {
 export const Message = ({
   role,
   parts,
-  onActionRequest,
-  actionIdsWithDecisionsMade,
+  onToolDecision,
+  toolIdsWithDecisionsMade,
 }: {
   role: string;
   parts: MyMessage['parts'];
-  onActionRequest: (
-    action: Action,
+  onToolDecision: (
+    tool: ToolRequiringApproval,
     decision: 'approve' | 'reject',
   ) => void;
-  actionIdsWithDecisionsMade: Set<string>;
+  toolIdsWithDecisionsMade: Set<string>;
 }) => {
   const isUser = role === 'user';
 
@@ -66,11 +69,11 @@ export const Message = ({
               );
             }
 
-            if (part.type === 'data-action-end') {
+            if (part.type === 'data-approval-end') {
               return (
                 <div key={part.id} className="mb-4">
                   <h2 className="text-sm font-medium mb-1">
-                    Action output
+                    Tool output
                   </h2>
                   <p className="text-xs text-muted-foreground">
                     {part.data.output.type}
@@ -79,13 +82,13 @@ export const Message = ({
               );
             }
 
-            // TODO: write a case for data-action-end
+            // TODO: write a case for data-approval-end
             // and return a bit of UI that shows the
-            // output of the action.
+            // output of the tool.
 
-            if (part.type === 'data-action-start') {
+            if (part.type === 'data-approval-request') {
               const hasDecisionBeenMade =
-                actionIdsWithDecisionsMade.has(part.data.action.id);
+                toolIdsWithDecisionsMade.has(part.data.tool.id);
 
               if (hasDecisionBeenMade) {
                 return null;
@@ -102,7 +105,7 @@ export const Message = ({
                         To:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.to}
+                        {part.data.tool.to}
                       </span>
                     </div>
                     <div>
@@ -110,7 +113,7 @@ export const Message = ({
                         Subject:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.subject}
+                        {part.data.tool.subject}
                       </span>
                     </div>
                     <div>
@@ -118,7 +121,7 @@ export const Message = ({
                         Content:
                       </span>
                       <div className="text-sm mt-1 p-2 bg-muted border-l-2 border-primary rounded">
-                        {part.data.action.content}
+                        {part.data.tool.content}
                       </div>
                     </div>
                   </div>
@@ -126,7 +129,10 @@ export const Message = ({
                     <button
                       className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                       onClick={() => {
-                        onActionRequest(part.data.action, 'approve');
+                        onToolDecision(
+                          part.data.tool,
+                          'approve',
+                        );
                       }}
                     >
                       Approve
@@ -134,7 +140,7 @@ export const Message = ({
                     <button
                       className="bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors"
                       onClick={() => {
-                        onActionRequest(part.data.action, 'reject');
+                        onToolDecision(part.data.tool, 'reject');
                       }}
                     >
                       Reject

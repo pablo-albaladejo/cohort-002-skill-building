@@ -58,7 +58,7 @@ export const Message = ({
               );
             }
 
-            // TODO: if the part is a data-action-start,
+            // TODO: if the part is a data-approval-request,
             // render a preview of the email that will be sent
 
             return null;

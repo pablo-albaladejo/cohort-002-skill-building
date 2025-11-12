@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { Action, MyMessage } from '../api/chat.ts';
+import type {
+  ToolRequiringApproval,
+  MyMessage,
+} from '../api/chat.ts';
 
 function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ');
@@ -58,7 +61,7 @@ export const Message = ({
               );
             }
 
-            if (part.type === 'data-action-start') {
+            if (part.type === 'data-approval-request') {
               return (
                 <div key={part.id} className="mb-4">
                   <h2 className="text-sm font-medium mb-2">
@@ -70,7 +73,7 @@ export const Message = ({
                         To:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.to}
+                        {part.data.tool.to}
                       </span>
                     </div>
                     <div>
@@ -78,7 +81,7 @@ export const Message = ({
                         Subject:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.subject}
+                        {part.data.tool.subject}
                       </span>
                     </div>
                     <div>
@@ -86,7 +89,7 @@ export const Message = ({
                         Content:
                       </span>
                       <div className="text-sm mt-1 p-2 bg-muted border-l-2 border-primary rounded">
-                        {part.data.action.content}
+                        {part.data.tool.content}
                       </div>
                     </div>
                   </div>

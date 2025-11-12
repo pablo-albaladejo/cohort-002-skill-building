@@ -14,16 +14,16 @@
 
 [`/src/app/api/chat/route.ts`]
 
-- Extend `MyMessage` with 3 custom data parts: `action-start`, `action-decision`, `action-end`
+- Extend `MyMessage` with 3 custom data parts: `approval-request`, `approval-decision`, `approval-end`
 - `Action` type: discriminated union matching tool types from 08.01 (send-email, create-github-issue, create-todo)
 - Each action type has specific fields (to/subject/content for email, repo/title/body for GitHub)
-- `ActionDecision`: approve (no data) or reject (with reason string)
+- `ToolApprovalDecision`: approve (no data) or reject (with reason string)
 - UUID action IDs for tracking through lifecycle
 
 ### Phase 2: Convert Tools to Action Writers
 
 - Modify tool execute handlers from 08.01
-- Instead of calling service: write `data-action-start` with action metadata
+- Instead of calling service: write `data-approval-request` with action metadata
 - Return immediate confirmation: "Email to X queued for approval"
 - Use `stopWhen: hasToolCall` to pause agent after tool invocation
 - Tool execution separated from action execution
@@ -31,7 +31,7 @@
 ### Phase 3: Build HITL Processor
 
 - `findDecisionsToProcess()` matches actions with user decisions
-- Extract `action-start` parts from assistant message, `action-decision` from user message
+- Extract `approval-request` parts from assistant message, `approval-decision` from user message
 - Match by action ID, return error if pending action without decision
 - Returns array of `{ action, decision }` pairs for execution
 - Prevents action execution without explicit approval
@@ -40,10 +40,10 @@
 
 [`/src/app/chat.tsx`]
 
-- Render action preview from `data-action-start` parts
+- Render action preview from `data-approval-request` parts
 - Show action details based on type (email content, GitHub issue body, etc)
 - Track `actionIdsWithDecisions` set to hide buttons after submission
-- Approve button: send `data-action-decision` with `{ type: "approve" }` via `sendMessage`
+- Approve button: send `data-approval-decision` with `{ type: "approve" }` via `sendMessage`
 - Reject flow: capture feedback in input, submit as `{ type: "reject", reason: string }`
 - Reuse `ChatInput` component for feedback entry, change placeholder
 
@@ -52,9 +52,9 @@
 - `getDiary()` converts `UIMessage[]` to markdown string for LLM
 - LLM doesn't receive message objects, receives text diary
 - Format text parts as-is
-- Format `action-start`: "Assistant requested to send email: To/Subject/Content"
-- Format `action-decision`: "User approved" or "User rejected: reason"
-- Format `action-end`: "Action result: output message"
+- Format `approval-request`: "Assistant requested to send email: To/Subject/Content"
+- Format `approval-decision`: "User approved" or "User rejected: reason"
+- Format `approval-end`: "Action result: output message"
 - All custom parts must be readable text in diary
 
 ### Phase 6: Execute Actions in Stream
@@ -64,9 +64,9 @@
 - Inside `createUIMessageStream`, call `findDecisionsToProcess()` first
 - Clone messages array: `messagesAfterHitl = structuredClone(messages)`
 - Loop through HITL results, execute approved actions
-- Approved: call service (emailService.send, githubService.createIssue), write `data-action-end` with success output
-- Rejected: write `data-action-end` with cancellation message including reason
-- Append `action-end` parts to `messagesAfterHitl` array
+- Approved: call service (emailService.send, githubService.createIssue), write `data-approval-end` with success output
+- Rejected: write `data-approval-end` with cancellation message including reason
+- Append `approval-end` parts to `messagesAfterHitl` array
 - Pass `messagesAfterHitl` to `getDiary()` so LLM sees action outcomes
 - Use `prompt: getDiary(messagesAfterHitl)` instead of `messages: convertToModelMessages()`
 
@@ -74,19 +74,21 @@
 
 - Explain HITL flow: tool call → pause → approval → result
 - List which tools require approval vs instant execution
-- Instruct: never assume success, wait for action-end result
+- Instruct: never assume success, wait for approval-end result
 - Guide: acknowledge user decisions, adjust on rejection feedback
 - Transparent behavior: LLM knows it's waiting for human decision
 
 ### Phase 8: Test Flows
 
 **Approve:**
+
 - User: "Email john@example.com about meeting change"
 - Agent calls sendEmail tool
 - UI shows preview, user approves
 - Email sends, agent confirms success
 
 **Reject:**
+
 - User: "Send reminder about TPS reports"
 - Agent calls sendEmail tool
 - UI shows preview, user rejects with "Wrong recipient"
@@ -99,9 +101,9 @@
 
 **Error handling:** HITL processor returns error if action lacks matching decision
 
-**Message cloning:** `structuredClone()` avoids mutating original array when appending action-end parts
+**Message cloning:** `structuredClone()` avoids mutating original array when appending approval-end parts
 
-**Tool execution timing:** Deferred vs immediate - destructive tools write action-start, safe tools execute instantly
+**Tool execution timing:** Deferred vs immediate - destructive tools write approval-request, safe tools execute instantly
 
 **Diary vs messages:** LLM receives formatted text diary, not UIMessage objects
 

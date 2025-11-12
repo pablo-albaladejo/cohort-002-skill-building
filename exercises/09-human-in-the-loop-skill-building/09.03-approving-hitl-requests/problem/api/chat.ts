@@ -10,7 +10,7 @@ import {
 } from 'ai';
 import z from 'zod';
 
-export type Action = {
+export type ToolRequiringApproval = {
   id: string;
   type: 'send-email';
   content: string;
@@ -18,7 +18,7 @@ export type Action = {
   subject: string;
 };
 
-export type ActionDecision =
+export type ToolApprovalDecision =
   | {
       type: 'approve';
     }
@@ -30,15 +30,15 @@ export type ActionDecision =
 export type MyMessage = UIMessage<
   unknown,
   {
-    'action-start': {
-      action: Action;
+    'approval-request': {
+      tool: ToolRequiringApproval;
     };
-    // TODO: declare an action-decision part that
+    // TODO: declare an approval-decision part that
     // contains the decision made by the user. Use
-    // the ActionDecision type for the decision.
-    // You'll also need an actionId field, which
-    // references the action that the decision is for.
-    'action-decision': TODO;
+    // the ToolApprovalDecision type for the decision.
+    // You'll also need an toolId field, which
+    // references the tool that the decision is for.
+    'approval-decision': TODO;
   }
 >;
 
@@ -68,9 +68,9 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-action-start',
+                type: 'data-approval-request',
                 data: {
-                  action: {
+                  tool: {
                     id: crypto.randomUUID(),
                     type: 'send-email',
                     to,

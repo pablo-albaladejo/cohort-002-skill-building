@@ -31,15 +31,15 @@ This implementation delegates too much power to the LLM. It can send an email an
 
 As always, I've given you a set of TODOs that you can follow. And the first one is in the `MyMessage` type.
 
-In this exercise, we're going to focus on the `action-start` part we discussed in the intro. This custom data part is going to have all the information we need to preview what we're going to be sending on the front end.
+In this exercise, we're going to focus on the `approval-request` part we discussed in the intro. This custom data part is going to have all the information we need to preview what we're going to be sending on the front end.
 
 ```ts
 export type MyMessage = UIMessage<
   unknown,
   {
-    // TODO: declare an action-start part that
+    // TODO: declare an approval-request part that
     // contains the action that will be performed.
-    'action-start': TODO;
+    'approval-request': TODO;
   }
 >;
 ```
@@ -57,17 +57,17 @@ inputSchema: z.object({
 
 So that's your first job. Declare a custom data part that has all of those attributes.
 
-NOTE: I also recommend you give the `action-start` part an ID. That will be very, very useful in future exercises, since other custom data parts will need to reference it.
+NOTE: I also recommend you give the `approval-request` part an ID. That will be very, very useful in future exercises, since other custom data parts will need to reference it.
 
 ## Fixing the Tool Call
 
-Next, you're going to go inside the `streamText` function inside the execute call of the `sendEmail` tool. And you will change this so that it writes a `data-action-start` part to the message stream writer instead of sending the email:
+Next, you're going to go inside the `streamText` function inside the execute call of the `sendEmail` tool. And you will change this so that it writes a `data-approval-request` part to the message stream writer instead of sending the email:
 
 ```ts
 // from the sendEmail tool
 execute: ({ to, subject, content }) => {
   // TODO: Instead of calling sendEmail, write a
-  // data-action-start part to the stream writer.
+  // data-approval-request part to the stream writer.
 };
 ```
 
@@ -88,7 +88,7 @@ Instead, we want to stop either when the step count is `10` or when the agent ha
 
 ## The Message Component
 
-So once that's done, our agent should have the ability to send these custom data parts to the front end. Fittingly then, our last TODO is in the front end. We're inside the message components here and if the part is a `data-action-start`, we want to render a preview of the email that will be sent.
+So once that's done, our agent should have the ability to send these custom data parts to the front end. Fittingly then, our last TODO is in the front end. We're inside the message components here and if the part is a `data-approval-request`, we want to render a preview of the email that will be sent.
 
 ```tsx
 export const Message = ({
@@ -104,7 +104,7 @@ export const Message = ({
         return <ReactMarkdown>{part.text}</ReactMarkdown>;
       }
 
-      // TODO: if the part is a data-action-start,
+      // TODO: if the part is a data-approval-request,
       // render a preview of the email that will be sent
 
       return null;
@@ -119,12 +119,12 @@ Good luck, and I'll see you in the solution!
 
 ## Steps To Complete
 
-- [ ] Define the `action-start` part type in the `MyMessage` type in [`api/chat.ts`](./api/chat.ts). Include fields for `action` which should contain: `id`, `type` ("send-email"), `to`, `subject`, and `content` fields.
+- [ ] Define the `approval-request` part type in the `MyMessage` type in [`api/chat.ts`](./api/chat.ts). Include fields for `action` which should contain: `id`, `type` ("send-email"), `to`, `subject`, and `content` fields.
 
-- [ ] Modify the `execute` function inside the `sendEmail` tool to write a data action-start part to the writer instead of calling the `sendEmail` function directly. You'll need to use `writer.write()` with the appropriate data structure.
+- [ ] Modify the `execute` function inside the `sendEmail` tool to write a data approval-request part to the writer instead of calling the `sendEmail` function directly. You'll need to use `writer.write()` with the appropriate data structure.
 
 - [ ] Add a second stop condition to the `stopWhen` array. Currently it has `stepCountIs(10)`, but you'll need to add `hasToolCall('sendEmail')` so it stops when the model wants to send an email. Remember - we need both!
 
-- [ ] Update the `Message` component in [`client/components.tsx`](./client/components.tsx) to render a preview of the email when it encounters a part with `type === 'data-action-start'`. Create a UI that shows the to, subject, and content fields.
+- [ ] Update the `Message` component in [`client/components.tsx`](./client/components.tsx) to render a preview of the email when it encounters a part with `type === 'data-approval-request'`. Create a UI that shows the to, subject, and content fields.
 
 - [ ] Test your implementation by running the exercise and asking the AI to send an email. Verify that instead of sending the email directly, it shows a preview of the email that would be sent.

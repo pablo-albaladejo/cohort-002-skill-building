@@ -1,6 +1,9 @@
 import React, { type ReactNode } from 'react';
-import type { ActionDecision, MyMessage } from '../api/chat.ts';
-import type { Action } from '../api/chat.ts';
+import type {
+  ToolApprovalDecision,
+  MyMessage,
+} from '../api/chat.ts';
+import type { ToolRequiringApproval } from '../api/chat.ts';
 import ReactMarkdown from 'react-markdown';
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -33,18 +36,18 @@ export const Wrapper = (props: {
 export const Message = ({
   role,
   parts,
-  onActionRequest,
-  actionIdsWithDecisionsMade,
+  onToolDecision,
+  toolIdsWithDecisionsMade,
 }: {
   role: string;
   parts: MyMessage['parts'];
   // TODO: pass down a function that will be called
   // when the user clicks the approve or reject button.
-  onActionRequest: TODO;
-  // TODO: pass down a set of action IDs that have
+  onToolDecision: TODO;
+  // TODO: pass down a set of tool IDs that have
   // had decisions made. Calculate these in the
   // component above.
-  actionIdsWithDecisionsMade: TODO;
+  toolIdsWithDecisionsMade: TODO;
 }) => {
   const isUser = role === 'user';
 
@@ -68,11 +71,11 @@ export const Message = ({
               );
             }
 
-            if (part.type === 'data-action-decision') {
+            if (part.type === 'data-approval-decision') {
               return (
                 <div key={part.id} className="mb-4">
                   <h2 className="text-sm font-medium mb-1">
-                    Action decision
+                    Tool decision
                   </h2>
                   <p className="text-xs text-muted-foreground">
                     {part.data.decision.type}
@@ -81,8 +84,8 @@ export const Message = ({
               );
             }
 
-            if (part.type === 'data-action-start') {
-              // TODO: check if the action ID has had a decision
+            if (part.type === 'data-approval-request') {
+              // TODO: check if the tool ID has had a decision
               // made. If it has, don't show the buttons below.
               const hasDecisionBeenMade = TODO;
 
@@ -97,7 +100,7 @@ export const Message = ({
                         To:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.to}
+                        {part.data.tool.to}
                       </span>
                     </div>
                     <div>
@@ -105,7 +108,7 @@ export const Message = ({
                         Subject:
                       </span>
                       <span className="text-sm ml-2">
-                        {part.data.action.subject}
+                        {part.data.tool.subject}
                       </span>
                     </div>
                     <div>
@@ -113,15 +116,15 @@ export const Message = ({
                         Content:
                       </span>
                       <div className="text-sm mt-1 p-2 bg-muted border-l-2 border-primary rounded">
-                        {part.data.action.content}
+                        {part.data.tool.content}
                       </div>
                     </div>
                   </div>
                   {hasDecisionBeenMade ? null : (
                     <>
                       {/* TODO: render the buttons below if the
-                      action ID has not had a decision made.
-                      Use the onActionRequest prop to handle
+                      tool ID has not had a decision made.
+                      Use the onToolDecision prop to handle
                       the button clicks. */}
                     </>
                   )}

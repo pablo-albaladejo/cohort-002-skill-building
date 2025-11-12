@@ -10,7 +10,7 @@ import {
 } from 'ai';
 import z from 'zod';
 
-export type Action = {
+export type ToolRequiringApproval = {
   id: string;
   type: 'send-email';
   content: string;
@@ -21,8 +21,8 @@ export type Action = {
 export type MyMessage = UIMessage<
   unknown,
   {
-    'action-start': {
-      action: Action;
+    'approval-request': {
+      tool: ToolRequiringApproval;
     };
   }
 >;
@@ -51,9 +51,9 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-action-start',
+                type: 'data-approval-request',
                 data: {
-                  action: {
+                  tool: {
                     id: crypto.randomUUID(),
                     type: 'send-email',
                     to,

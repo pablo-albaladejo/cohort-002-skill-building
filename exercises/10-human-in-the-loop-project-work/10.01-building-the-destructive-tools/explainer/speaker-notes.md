@@ -12,6 +12,7 @@
 ### Real-World Power
 
 **Core categories:**
+
 - Communication: email (Resend, SendGrid), Slack, Discord, SMS
 - Task mgmt: Linear, GitHub issues, Jira, Trello
 - Calendar: Google Calendar, Cal.com
@@ -20,6 +21,7 @@
 - Nuclear option: Zapier MCP = 30k+ actions across 8k apps
 
 **HITL decision matrix:**
+
 - Destructive = approval required: emails, public posts, charges, deletes, deploys, meetings
 - Safe = instant: search/read, local todos, analysis, calculations
 
@@ -28,14 +30,15 @@
 **Links:** `notes.md` lines 64-124 (Resend email example)
 
 - npm package + API key
-- Tool writes `data-action-start`, returns early
+- Tool writes `data-approval-request`, returns early
 - Actual execution in HITL processor on approval
 - Example: Resend SDK for email, Octokit for GitHub
 
 **Key points:**
+
 - Tool execute = queue, not execute
 - HITL handler = switch on action.type, run service
-- Error handling with try/catch, write action-end with error flag
+- Error handling with try/catch, write approval-end with error flag
 
 ### Implementation Pattern 2: MCP Servers
 
@@ -48,13 +51,16 @@
 - AI SDK v5: `experimental_toolCall: "auto"`
 
 **Demo flow:**
+
 ```json
 {
   "mcpServers": {
     "github": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {"GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"}
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
     }
   }
 }
@@ -69,12 +75,13 @@
 - Separation enables testing, reuse, swapping backends
 
 **Architecture:**
+
 ```typescript
 // Service: pure logic
 GitHubService.createIssue(opts)
 
 // Tool: LLM interface
-createGitHubIssueTool.execute() -> writes data-action-start
+createGitHubIssueTool.execute() -> writes data-approval-request
 ```
 
 ### Implementation Pattern 4: Persistence Layer
@@ -91,11 +98,13 @@ createGitHubIssueTool.execute() -> writes data-action-start
 ### Phase 1: Choose Stack
 
 **Starter kit (2-3 tools):**
+
 - Email (Resend/SMTP)
 - GitHub issue (Octokit)
 - Local todo (persistence)
 
 **Power user (5+ tools):**
+
 - Above + calendar, Slack, Zapier MCP
 
 ### Phase 2: Service Layer
@@ -103,6 +112,7 @@ createGitHubIssueTool.execute() -> writes data-action-start
 **Links:** `notes.md` lines 426-450
 
 Create `src/lib/services/`:
+
 - `email-service.ts` - EmailService.send()
 - `github-service.ts` - GitHubService.createIssue(), createPR()
 - `calendar-service.ts` - CalendarService.createEvent()
@@ -116,7 +126,8 @@ Keep separate from tools for testing
 Create `src/lib/tools/destructive-tools.ts`:
 
 All destructive tools must:
-1. Write `data-action-start` with action metadata
+
+1. Write `data-approval-request` with action metadata
 2. Return description of queued action
 3. NOT execute immediately
 
@@ -125,6 +136,7 @@ All destructive tools must:
 **Links:** `notes.md` lines 480-497
 
 Update chat route:
+
 - Import tools
 - Add to `tools` object
 - Set `stopWhen: hasToolCall` to pause for HITL
@@ -134,20 +146,23 @@ Update chat route:
 **Links:** `notes.md` lines 499-552
 
 In HITL processor loop:
+
 - Switch on `action.type`
 - Call service for approved actions
-- Write `data-action-end` with result/error
+- Write `data-approval-end` with result/error
 - Handle rejections with feedback
 
 ### Phase 6: Test Flows
 
 **Email test:**
+
 1. "Send email to john@example.com"
 2. Queue shows preview
 3. Approve → sends
 4. Reject → cancels
 
 **GitHub test:**
+
 1. "Create issue: bug in auth"
 2. Preview shows
 3. Reject with "add bug label"
@@ -155,6 +170,7 @@ In HITL processor loop:
 5. Approve → issue created, returns URL
 
 **Todo test:**
+
 1. "Remind me review PR #456 tomorrow"
 2. Instant execution (non-destructive)
 
@@ -171,6 +187,7 @@ In HITL processor loop:
 **Links:** `notes.md` lines 597-622
 
 Update prompt with:
+
 - Available tools list
 - HITL behavior description
 - Confirmation requirements
@@ -181,6 +198,7 @@ Update prompt with:
 **Links:** `notes.md` lines 624-664
 
 Walk through 3 scenarios:
+
 1. Email: draft → preview → approve → sent
 2. GitHub: create → preview → reject with feedback → adjust → approve → URL
 3. Todo: request → instant execution
@@ -200,7 +218,7 @@ Walk through 3 scenarios:
 **Links:** `notes.md` lines 365-391
 
 - All tools: try/catch wrapper
-- Write action-end with error flag
+- Write approval-end with error flag
 - Re-throw for agent handling
 - Graceful failure messages
 
@@ -209,6 +227,7 @@ Walk through 3 scenarios:
 **Links:** `notes.md` lines 666-696
 
 **20+ categories:**
+
 - Data: Postgres MCP, Google Sheets, Airtable, Mixpanel
 - DevOps: CI/CD triggers, Datadog, feature flags, Terraform
 - CRM: HubSpot, Salesforce, Close.io, Intercom

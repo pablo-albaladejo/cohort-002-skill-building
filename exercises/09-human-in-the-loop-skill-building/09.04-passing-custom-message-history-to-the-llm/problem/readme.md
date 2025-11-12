@@ -44,22 +44,22 @@ const getDiary = (messages: MyMessage[]): string => {
               return part.text;
             }
 
-            if (part.type === 'data-action-start') {
-              if (part.data.action.type === 'send-email') {
+            if (part.type === 'data-approval-request') {
+              if (part.data.tool.type === 'send-email') {
                 return [
                   'The assistant requested to send an email:',
-                  `To: ${part.data.action.to}`,
-                  `Subject: ${part.data.action.subject}`,
-                  `Content: ${part.data.action.content}`,
+                  `To: ${part.data.tool.to}`,
+                  `Subject: ${part.data.tool.subject}`,
+                  `Content: ${part.data.tool.content}`,
                 ].join('\n');
               }
 
               return '';
             }
 
-            if (part.type === 'data-action-decision') {
+            if (part.type === 'data-approval-decision') {
               if (part.data.decision.type === 'approve') {
-                return 'The user approved the action.';
+                return 'The user approved the tool.';
               }
 
               return `The user rejected the action: ${part.data.decision.reason}`;

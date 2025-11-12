@@ -6,7 +6,7 @@
 
 - Bug: LLM ignores rejection feedback, still claims email sent successfully
 - Root cause: `convertToModelMessages` strips custom data parts from UIMessages
-- Model messages only see text/tool parts, miss `action-start` and `action-decision` data
+- Model messages only see text/tool parts, miss `approval-request` and `approval-decision` data
 - Need LLM to see full context: what assistant requested + user's approval/rejection
 - Solution: format entire conversation history as markdown string using `prompt` property
 
@@ -16,7 +16,7 @@
 
 - Test flow: send email → reject with feedback → LLM responds incorrectly
 - [`problem/api/chat.ts`](./problem/api/chat.ts) line 104: uses `messages: convertToModelMessages(messages)`
-- `convertToModelMessages` drops custom data parts (`action-start`, `action-decision`)
+- `convertToModelMessages` drops custom data parts (`approval-request`, `approval-decision`)
 - LLM doesn't see rejection reason, thinks email sent
 
 #### Phase 2: Use getDiary Function
@@ -25,8 +25,8 @@
 - Converts message history to markdown string
 - Formats each message with heading (## User/Assistant Message)
 - Translates custom parts to readable text:
-  - `action-start` → "The assistant requested to send an email: To: X, Subject: Y..."
-  - `action-decision` → "User approved/rejected: reason"
+  - `approval-request` → "The assistant requested to send an email: To: X, Subject: Y..."
+  - `approval-decision` → "User approved/rejected: reason"
 - Full control over prompt engineering from within messages
 
 #### Phase 3: Replace convertToModelMessages

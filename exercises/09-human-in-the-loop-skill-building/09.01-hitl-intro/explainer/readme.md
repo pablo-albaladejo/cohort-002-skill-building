@@ -20,21 +20,21 @@ We're going to be building a human in the loop system with the AI SDK's custom d
 
 And conceptually, these data parts are going to represent an 'action' in several stages.
 
-| Data Part              | Description                                                                                                    |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `data-action-start`    | Signals when the LLM wants to begin an action – i.e. it's requesting to send an email.                         |
-| `data-action-decision` | Captures the user's approval or rejection of the proposed action – i.e. whether to send the email or not.      |
-| `data-action-end`      | Confirms when the action has been completed (only after approval) – i.e. the email has been sent successfully. |
+| Data Part                | Description                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `data-approval-request`  | Signals when the LLM wants to begin an action – i.e. it's requesting to send an email.                         |
+| `data-approval-decision` | Captures the user's approval or rejection of the proposed action – i.e. whether to send the email or not.      |
+| `data-approval-end`      | Confirms when the action has been completed (only after approval) – i.e. the email has been sent successfully. |
 
 ## The Flow
 
 These will be used like so:
 
-| Step                     | Description                                                                                                                                         | Data Part              |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **LLM Initiates Action** | When the LLM decides to perform an action (like sending an email), it 'starts' the action.                                                          | `data-action-start`    |
-| **Human Review**         | The system pauses execution and presents the proposed action to the user for review.                                                                | _(none)_               |
-| **User Decision**        | The user can either approve or reject the action, which creates a `data-action-decision` event. If rejected, they provide a reason to help improve. | `data-action-decision` |
-| **Action Execution**     | Only after approval does the system proceed with `data-action-end` and actually execute the action.                                                 | `data-action-end`      |
+| Step                   | Description                                                                                                                                           | Data Part                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **LLM Initiates Tool** | When the LLM decides to perform a tool (like sending an email), it 'starts' the tool.                                                                 | `data-approval-request`  |
+| **Human Review**       | The system pauses execution and presents the proposed action to the user for review.                                                                  | _(none)_                 |
+| **User Decision**      | The user can either approve or reject the action, which creates a `data-approval-decision` event. If rejected, they provide a reason to help improve. | `data-approval-decision` |
+| **Tool Execution**     | Only after approval does the system proceed with `data-approval-end` and actually execute the tool.                                                   | `data-approval-end`      |
 
 In the next few exercises, we're going to be building this.

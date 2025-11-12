@@ -11,7 +11,7 @@ import z from 'zod';
 import { sendEmail } from './email-service.ts';
 import { findDecisionsToProcess } from './hitl-processor.ts';
 
-export type Action = {
+export type ToolRequiringApproval = {
   id: string;
   type: 'send-email';
   content: string;
@@ -19,12 +19,12 @@ export type Action = {
   subject: string;
 };
 
-export type ActionOutput = {
+export type ToolRequiringApprovalOutput = {
   type: 'send-email';
   message: string;
 };
 
-export type ActionDecision =
+export type ToolApprovalDecision =
   | {
       type: 'approve';
     }
@@ -36,18 +36,18 @@ export type ActionDecision =
 export type MyMessage = UIMessage<
   unknown,
   {
-    'action-start': {
-      action: Action;
+    'approval-request': {
+      tool: ToolRequiringApproval;
     };
-    'action-decision': {
-      // The original action ID that this decision is for.
-      actionId: string;
-      decision: ActionDecision;
+    'approval-decision': {
+      // The original tool ID that this decision is for.
+      toolId: string;
+      decision: ToolApprovalDecision;
     };
-    'action-end': {
-      output: ActionOutput;
-      // The original action ID that this output is for.
-      actionId: string;
+    'approval-end': {
+      output: ToolRequiringApprovalOutput;
+      // The original tool ID that this output is for.
+      toolId: string;
     };
   }
 >;
@@ -65,30 +65,30 @@ const getDiary = (messages: MyMessage[]): string => {
               return part.text;
             }
 
-            if (part.type === 'data-action-start') {
-              if (part.data.action.type === 'send-email') {
+            if (part.type === 'data-approval-request') {
+              if (part.data.tool.type === 'send-email') {
                 return [
                   'The assistant requested to send an email:',
-                  `To: ${part.data.action.to}`,
-                  `Subject: ${part.data.action.subject}`,
-                  `Content: ${part.data.action.content}`,
+                  `To: ${part.data.tool.to}`,
+                  `Subject: ${part.data.tool.subject}`,
+                  `Content: ${part.data.tool.content}`,
                 ].join('\n');
               }
 
               return '';
             }
 
-            if (part.type === 'data-action-decision') {
+            if (part.type === 'data-approval-decision') {
               if (part.data.decision.type === 'approve') {
-                return 'The user approved the action.';
+                return 'The user approved the tool.';
               }
 
-              return `The user rejected the action: ${part.data.decision.reason}`;
+              return `The user rejected the tool: ${part.data.decision.reason}`;
             }
 
-            if (part.type === 'data-action-end') {
+            if (part.type === 'data-approval-end') {
               if (part.data.output.type === 'send-email') {
-                return `The action was performed: ${part.data.output.message}`;
+                return `The tool was performed: ${part.data.output.message}`;
               }
 
               return '';
@@ -139,27 +139,27 @@ export const POST = async (req: Request): Promise<Response> => {
     execute: async ({ writer }) => {
       const messagesAfterHitl: MyMessage[] = messages;
 
-      for (const { action, decision } of hitlResult) {
+      for (const { tool, decision } of hitlResult) {
         if (decision.type === 'approve') {
-          // Perform the action
+          // Perform the tool
           sendEmail({
-            to: action.to,
-            subject: action.subject,
-            content: action.content,
+            to: tool.to,
+            subject: tool.subject,
+            content: tool.content,
           });
 
           const messagePart: MyMessage['parts'][number] = {
-            type: 'data-action-end',
+            type: 'data-approval-end',
             data: {
-              actionId: action.id,
+              toolId: tool.id,
               output: {
-                type: action.type,
+                type: tool.type,
                 message: 'Email sent',
               },
             },
           };
 
-          // Write the result of the action to the stream
+          // Write the result of the tool to the stream
           writer.write(messagePart);
 
           // Add the message part to the messages array
@@ -168,17 +168,17 @@ export const POST = async (req: Request): Promise<Response> => {
           ]!.parts.push(messagePart);
         } else {
           const messagePart: MyMessage['parts'][number] = {
-            type: 'data-action-end',
+            type: 'data-approval-end',
             data: {
-              actionId: action.id,
+              toolId: tool.id,
               output: {
-                type: action.type,
+                type: tool.type,
                 message: 'Email not sent: ' + decision.reason,
               },
             },
           };
 
-          // Write the result of the action to the stream
+          // Write the result of the tool to the stream
           writer.write(messagePart);
 
           // Add the message part to the messages array
@@ -208,9 +208,9 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-action-start',
+                type: 'data-approval-request',
                 data: {
-                  action: {
+                  tool: {
                     id: crypto.randomUUID(),
                     type: 'send-email',
                     to,

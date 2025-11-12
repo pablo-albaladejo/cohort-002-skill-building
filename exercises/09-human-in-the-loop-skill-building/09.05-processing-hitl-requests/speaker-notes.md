@@ -11,20 +11,20 @@
 
 ### Steps To Complete
 
-#### Phase 1: Declare action-end type
+#### Phase 1: Declare approval-end type
 
 [`problem/api/chat.ts`](./problem/api/chat.ts)
 
-- Add third custom data part: `action-end`
+- Add third custom data part: `approval-end`
 - Tracks action lifecycle: start -> decision -> end
-- Contains `actionId` and `output` object with `message` field
+- Contains `toolId` and `output` object with `message` field
 - Enables diary to show completed actions
 
-#### Phase 2: Update getDiary for action-end
+#### Phase 2: Update getDiary for approval-end
 
 [`problem/api/chat.ts`](./problem/api/chat.ts)
 
-- Add handler for `data-action-end` part type
+- Add handler for `data-approval-end` part type
 - Return descriptive string: `The action was performed: ${part.data.output.message}`
 - Lets LLM see full action history
 
@@ -41,8 +41,8 @@
 
 [`problem/api/hitl-processor.ts`](./problem/api/hitl-processor.ts)
 
-- Extract actions: filter assistant parts for `data-action-start`, map to `.data.action`
-- Extract decisions: filter user parts for `data-action-decision`, create Map of actionId -> decision
+- Extract actions: filter assistant parts for `data-approval-request`, map to `.data.tool`
+- Extract decisions: filter user parts for `data-approval-decision`, create Map of toolId -> decision
 - Loop through actions, match with decisions
 - If decision missing: return HITLError (400, "No decision found")
 - If found: push `{action, decision}` to decisionsToProcess array
@@ -53,7 +53,7 @@
 - Run dev server
 - Send message triggering sendEmail
 - Make approve/reject decision
-- Check console.dir output shows matched action-decision pairs
+- Check console.dir output shows matched approval-decision pairs
 - Note: emails still won't send (next exercise)
 
 ## Solution
@@ -64,14 +64,14 @@
 
 [`solution/api/chat.ts`](./solution/api/chat.ts)
 
-- `action-end` part: `{actionId: string, output: {message: string}}`
+- `approval-end` part: `{toolId: string, output: {message: string}}`
 - Simple structure, extensible for different action types
 
 #### Phase 2: Diary handling
 
 [`solution/api/chat.ts`](./solution/api/chat.ts)
 
-- Handle `data-action-end`: return `The action was performed: ${part.data.output.message}`
+- Handle `data-approval-end`: return `The action was performed: ${part.data.output.message}`
 - Maintains conversation context for LLM
 
 #### Phase 3: Validation
@@ -86,15 +86,15 @@
 
 [`solution/api/hitl-processor.ts`](./solution/api/hitl-processor.ts)
 
-- Actions: `mostRecentAssistantMessage.parts.filter(part => part.type === 'data-action-start').map(part => part.data.action)`
-- Decisions: `new Map(mostRecentUserMessage.parts.filter(part => part.type === 'data-action-decision').map(part => [part.data.actionId, part.data.decision]))`
-- Loop + match: `decisions.get(action.id)`, return error if missing, otherwise push to array
+- Actions: `mostRecentAssistantMessage.parts.filter(part => part.type === 'data-approval-request').map(part => part.data.tool)`
+- Decisions: `new Map(mostRecentUserMessage.parts.filter(part => part.type === 'data-approval-decision').map(part => [part.data.toolId, part.data.decision]))`
+- Loop + match: `decisions.get(tool.id)`, return error if missing, otherwise push to array
 - Clean, functional approach using filter/map
 
 #### Phase 5: Flow overview
 
-- Assistant requests action (action-start)
-- User makes decision (action-decision)
+- Assistant requests action (approval-request)
+- User makes decision (approval-decision)
 - System validates all decisions present
 - Returns matched pairs ready for execution
 - Error if any action lacks decision

@@ -2,13 +2,13 @@ Now that we've passed all the information to the LLM, we need to process the dec
 
 In this exercise, we'll be working on processing human-in-the-loop (HITL) decisions for actions like sending emails.
 
-## Declaring the `action-end` Part
+## Declaring the `approval-end` Part
 
-First, we need to declare our third custom data part - an `action-end` part that contains the output of the action.
+First, we need to declare our third custom data part - an `approval-end` part that contains the output of the tool.
 
 This will help us track the entire lifecycle of an action from request to completion.
 
-In the [`api/chat.ts`](./api/chat.ts) file, we need to complete the type definition for the `action-end` part:
+In the [`api/chat.ts`](./api/chat.ts) file, we need to complete the type definition for the `approval-end` part:
 
 ```ts
 export type MyMessage = UIMessage<
@@ -16,28 +16,28 @@ export type MyMessage = UIMessage<
   {
     // ...existing parts...
 
-    // TODO: declare an action-end part that contains
-    // the output of the action. This should contain:
+    // TODO: declare an approval-end part that contains
+    // the output of the tool. This should contain:
     // - the action ID
     // - the output of the action (in this case, a message
     // that the email was sent)
-    'action-end': TODO;
+    'approval-end': TODO;
   }
 >;
 ```
 
-We need to define what data an action-end part should contain - at minimum, it should include the action ID and information about the output.
+We need to define what data an approval-end part should contain - at minimum, it should include the action ID and information about the output.
 
 ## Updating the Diary Function
 
-Next, we need to update the `getDiary` function to handle action-end parts. This function transforms message parts into a readable format for the LLM:
+Next, we need to update the `getDiary` function to handle approval-end parts. This function transforms message parts into a readable format for the LLM:
 
 ```ts
 // inside the getDiary function
-if (part.type === 'data-action-end') {
-  // TODO: if the part is a data-action-end,
+if (part.type === 'data-approval-end') {
+  // TODO: if the part is a data-approval-end,
   // return a string that describes the output of
-  // the action.
+  // the tool.
 }
 ```
 
@@ -65,7 +65,7 @@ Finally, we need to implement the `findDecisionsToProcess` function, which:
 
 1. Gets actions from the assistant message
 2. Gets decisions from the user message
-3. Matches them up and returns action-decision pairs to process
+3. Matches them up and returns approval-decision pairs to process
 
 ```ts
 export const findDecisionsToProcess = (opts: {
@@ -93,7 +93,7 @@ export const findDecisionsToProcess = (opts: {
   const decisionsToProcess: HITLDecisionsToProcess[] = [];
 
   for (const action of actions) {
-    const decision = decisions.get(action.id);
+    const decision = decisions.get(tool.id);
 
     // TODO: if the decision is not found, return an error -
     // the user should make a decision before continuing.
@@ -108,7 +108,7 @@ export const findDecisionsToProcess = (opts: {
 
 This function ensures we have all the necessary information before proceeding with any actions, providing a safety mechanism for our application.
 
-You can also return a `HITLError` if the user hasn't made a decision for an action. This has already been scaffolded for you in the `POST` route.
+You can also return a `HITLError` if the user hasn't made a decision for an tool. This has already been scaffolded for you in the `POST` route.
 
 ```ts
 // NOTE: if hitlResult returns a HITLError,
@@ -138,17 +138,17 @@ Good luck, and I'll see you in the solution!
 
 ## Steps To Complete
 
-- [ ] Complete the `'action-end'` type definition in [`api/chat.ts`](./api/chat.ts) to include the action ID and output information
+- [ ] Complete the `'approval-end'` type definition in [`api/chat.ts`](./api/chat.ts) to include the action ID and output information
 
-- [ ] Update the `getDiary` function to handle `data-action-end` parts by returning a string that describes the action output
+- [ ] Update the `getDiary` function to handle `data-approval-end` parts by returning a string that describes the action output
 
 - [ ] Add validation in the POST handler to return a 400 response if there's no most recent user message
 
 - [ ] Implement the `findDecisionsToProcess` function to:
   - Get actions from the assistant message
   - Get decisions from the user message
-  - Match them up and return action-decision pairs to process
+  - Match them up and return approval-decision pairs to process
   - Return a `HITLError` if the user hasn't made a decision for an action
-- [ ] Test your implementation by running the local dev server and checking if the console logs show the correct action-decision pairs
+- [ ] Test your implementation by running the local dev server and checking if the console logs show the correct approval-decision pairs
 
 - [ ] Note that `sendEmail` still won't be executed yet - we'll do that in the next exercise

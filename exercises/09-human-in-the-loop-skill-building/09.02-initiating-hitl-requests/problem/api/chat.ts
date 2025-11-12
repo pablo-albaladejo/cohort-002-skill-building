@@ -13,9 +13,9 @@ import { sendEmail } from './email-service.ts';
 export type MyMessage = UIMessage<
   unknown,
   {
-    // TODO: declare an action-start part that
-    // contains the action that will be performed.
-    'action-start': TODO;
+    // TODO: declare an approval-request  part that
+    // contains the tool that will be performed
+    'approval-request': TODO;
   }
 >;
 
@@ -43,7 +43,7 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: async ({ to, subject, content }) => {
               // TODO: change this so that it sends a part
-              // of data-action-start to the writer instead of
+              // of data-approval-request to the writer instead of
               // sending the email.
               await sendEmail({ to, subject, content });
 

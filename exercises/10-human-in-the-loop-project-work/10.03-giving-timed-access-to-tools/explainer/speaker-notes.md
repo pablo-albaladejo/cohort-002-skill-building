@@ -34,7 +34,7 @@
 
 [Chat route types]
 
-- Extend `ActionDecision` discriminated union
+- Extend `ToolApprovalDecision` discriminated union
 - Add `approve-for-thread` type with `toolName` field
 - Three decision types: `approve`, `approve-for-thread`, `reject`
 - Type safety ensures correct data flow through system
@@ -45,10 +45,10 @@
 
 - Load chat's `grantedPermissions` at request start
 - Check: tool in granted list?
-- If granted: execute immediately, write `data-action-end`, skip HITL
-- If not granted: write `data-action-start`, wait for decision
+- If granted: execute immediately, write `data-approval-end`, skip HITL
+- If not granted: write `data-approval-request`, wait for decision
 - `shouldRequestApproval()` helper: maps action type to tool name, checks list
-- LLM sees outcome either way via `action-end` part
+- LLM sees outcome either way via `approval-end` part
 
 ### Phase 5: Frontend Approval UI
 
@@ -65,7 +65,7 @@
 [HITL decision processor]
 
 - Execute action on approval or approve-for-thread
-- Write `data-action-end` with result
+- Write `data-approval-end` with result
 - If `approve-for-thread`: call `grantToolPermission(chatId, toolName)`
 - Permission persisted to file system immediately
 - Next tool call same type auto-executes without UI prompt
@@ -104,18 +104,21 @@
 ## Mindful Considerations
 
 **Security tradeoffs:**
+
 - Thread-scoped = persists entire chat history
 - User may forget granted permissions
 - Consider expiry times (1 hour, session-based, etc.)
 - Don't grant destructive tools by default
 
 **UX patterns:**
+
 - Badge indicators for pre-approved tools
 - Clear permission list in settings
 - Global vs thread vs time-limited approval
 - Edge case: tool parameters change (different recipient) - still need approval?
 
 **Implementation notes:**
+
 - Multiple actions same turn: some granted, some not
 - Revocation doesn't affect in-flight actions
 - Tool name mapping must be consistent

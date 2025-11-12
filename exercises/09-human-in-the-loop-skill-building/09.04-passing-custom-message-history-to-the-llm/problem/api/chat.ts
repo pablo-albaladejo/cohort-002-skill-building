@@ -10,7 +10,7 @@ import {
 } from 'ai';
 import z from 'zod';
 
-export type Action = {
+export type ToolRequiringApproval = {
   id: string;
   type: 'send-email';
   content: string;
@@ -18,7 +18,7 @@ export type Action = {
   subject: string;
 };
 
-export type ActionDecision =
+export type ToolApprovalDecision =
   | {
       type: 'approve';
     }
@@ -30,13 +30,13 @@ export type ActionDecision =
 export type MyMessage = UIMessage<
   unknown,
   {
-    'action-start': {
-      action: Action;
+    'approval-request': {
+      tool: ToolRequiringApproval;
     };
-    'action-decision': {
-      // The original action ID that this decision is for.
-      actionId: string;
-      decision: ActionDecision;
+    'approval-decision': {
+      // The original tool ID that this decision is for.
+      toolId: string;
+      decision: ToolApprovalDecision;
     };
   }
 >;
@@ -54,25 +54,25 @@ const getDiary = (messages: MyMessage[]): string => {
               return part.text;
             }
 
-            if (part.type === 'data-action-start') {
-              if (part.data.action.type === 'send-email') {
+            if (part.type === 'data-approval-request') {
+              if (part.data.tool.type === 'send-email') {
                 return [
                   'The assistant requested to send an email:',
-                  `To: ${part.data.action.to}`,
-                  `Subject: ${part.data.action.subject}`,
-                  `Content: ${part.data.action.content}`,
+                  `To: ${part.data.tool.to}`,
+                  `Subject: ${part.data.tool.subject}`,
+                  `Content: ${part.data.tool.content}`,
                 ].join('\n');
               }
 
               return '';
             }
 
-            if (part.type === 'data-action-decision') {
+            if (part.type === 'data-approval-decision') {
               if (part.data.decision.type === 'approve') {
-                return 'The user approved the action.';
+                return 'The user approved the tool.';
               }
 
-              return `The user rejected the action: ${part.data.decision.reason}`;
+              return `The user rejected the tool: ${part.data.decision.reason}`;
             }
 
             return '';
@@ -112,9 +112,9 @@ export const POST = async (req: Request): Promise<Response> => {
             }),
             execute: ({ to, subject, content }) => {
               writer.write({
-                type: 'data-action-start',
+                type: 'data-approval-request',
                 data: {
-                  action: {
+                  tool: {
                     id: crypto.randomUUID(),
                     type: 'send-email',
                     to,

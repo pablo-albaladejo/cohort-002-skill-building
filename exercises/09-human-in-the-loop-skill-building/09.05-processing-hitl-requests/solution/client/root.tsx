@@ -3,7 +3,10 @@ import React, { useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ChatInput, Message, Wrapper } from './components.tsx';
 import './tailwind.css';
-import type { Action, MyMessage } from '../api/chat.ts';
+import type {
+  ToolRequiringApproval,
+  MyMessage,
+} from '../api/chat.ts';
 
 const App = () => {
   const { messages, sendMessage } = useChat<MyMessage>({});
@@ -12,22 +15,22 @@ const App = () => {
     `Send an email to team@aihero.dev saying what a fantastic AI workshop I'm currently attending. Thank them for the workshop.`,
   );
 
-  const actionIdsWithDecisionsMade = useMemo(() => {
+  const toolIdsWithDecisionsMade = useMemo(() => {
     const allMessageParts = messages.flatMap(
       (message) => message.parts,
     );
 
-    const decisionsByActionId = new Set(
+    const decisionsByToolId = new Set(
       allMessageParts
-        .filter((part) => part.type === 'data-action-decision')
-        .map((part) => part.data.actionId),
+        .filter((part) => part.type === 'data-approval-decision')
+        .map((part) => part.data.toolId),
     );
 
-    return decisionsByActionId;
+    return decisionsByToolId;
   }, [messages]);
 
-  const [actionGivingFeedbackOn, setActionGivingFeedbackOn] =
-    useState<Action | null>(null);
+  const [toolGivingFeedbackOn, setToolGivingFeedbackOn] =
+    useState<ToolRequiringApproval | null>(null);
 
   return (
     <Wrapper
@@ -36,15 +39,15 @@ const App = () => {
           key={message.id}
           role={message.role}
           parts={message.parts}
-          actionIdsWithDecisionsMade={actionIdsWithDecisionsMade}
-          onActionRequest={(action, decision) => {
+          toolIdsWithDecisionsMade={toolIdsWithDecisionsMade}
+          onToolDecision={(tool, decision) => {
             if (decision === 'approve') {
               sendMessage({
                 parts: [
                   {
-                    type: 'data-action-decision',
+                    type: 'data-approval-decision',
                     data: {
-                      actionId: action.id,
+                      toolId: tool.id,
                       decision: {
                         type: 'approve',
                       },
@@ -54,25 +57,25 @@ const App = () => {
               });
             } else {
               setInput('');
-              setActionGivingFeedbackOn(action);
+              setToolGivingFeedbackOn(tool);
             }
           }}
         />
       ))}
       input={
         <ChatInput
-          isGivingFeedback={!!actionGivingFeedbackOn}
+          isGivingFeedback={!!toolGivingFeedbackOn}
           input={input}
           onChange={(e) => setInput(e.target.value)}
           onSubmit={(e) => {
             e.preventDefault();
-            if (actionGivingFeedbackOn) {
+            if (toolGivingFeedbackOn) {
               sendMessage({
                 parts: [
                   {
-                    type: 'data-action-decision',
+                    type: 'data-approval-decision',
                     data: {
-                      actionId: actionGivingFeedbackOn.id,
+                      toolId: toolGivingFeedbackOn.id,
                       decision: {
                         type: 'reject',
                         reason: input,
@@ -82,7 +85,7 @@ const App = () => {
                 ],
               });
 
-              setActionGivingFeedbackOn(null);
+              setToolGivingFeedbackOn(null);
               setInput('');
               return;
             }

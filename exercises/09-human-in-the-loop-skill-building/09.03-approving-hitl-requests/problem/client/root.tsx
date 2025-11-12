@@ -15,7 +15,9 @@ const App = () => {
     `Send an email to team@aihero.dev saying what a fantastic AI workshop I'm currently attending. Thank them for the workshop.`,
   );
 
-  const toolIdsWithDecisionsMade = useMemo(() => {
+  // We look in the message history to see if we've
+  // made a decision for any tools, and track them in a set.
+  const toolIdsWithDecisionsMade: Set<string> = useMemo(() => {
     const allMessageParts = messages.flatMap(
       (message) => message.parts,
     );

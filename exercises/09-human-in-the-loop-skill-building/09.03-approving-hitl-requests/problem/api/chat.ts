@@ -33,12 +33,11 @@ export type MyMessage = UIMessage<
     'approval-request': {
       tool: ToolRequiringApproval;
     };
-    // TODO: declare an approval-decision part that
-    // contains the decision made by the user. Use
-    // the ToolApprovalDecision type for the decision.
-    // You'll also need an toolId field, which
-    // references the tool that the decision is for.
-    'approval-decision': TODO;
+    'approval-decision': {
+      // The original tool ID that this decision is for.
+      toolId: string;
+      decision: ToolApprovalDecision;
+    };
   }
 >;
 

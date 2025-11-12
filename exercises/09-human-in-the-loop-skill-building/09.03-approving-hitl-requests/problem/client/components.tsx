@@ -122,10 +122,24 @@ export const Message = ({
                   </div>
                   {hasDecisionBeenMade ? null : (
                     <>
-                      {/* TODO: render the buttons below if the
-                      tool ID has not had a decision made.
-                      Use the onToolDecision prop to handle
-                      the button clicks. */}
+                      <div className="flex gap-2">
+                        <button
+                          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                          onClick={() => {
+                            // TODO: Handle the approval case.
+                          }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors"
+                          onClick={() => {
+                            // TODO: Handle the rejection case.
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>

@@ -30,18 +30,19 @@ export const findDecisionsToProcess = (opts: {
 
   // TODO: Get all the tools requiring approval from the assistant message
   // and return them in an array.
-  const tools = TODO;
+  const tools: ToolRequiringApproval[] = TODO;
 
   // TODO: Get all the decisions that the user has made
   // and return them in a map.
-  const decisions = TODO;
+  const decisions: Map<string, ToolApprovalDecision> = TODO;
 
   const decisionsToProcess: HITLDecisionsToProcess[] = [];
 
   for (const tool of tools) {
-    const decision = decisions.get(tool.id);
+    const decision: ToolApprovalDecision | undefined =
+      decisions.get(tool.id);
 
-    // TODO: if the decision is not found, return an error -
+    // TODO: if the decision is not found, return a HITLError -
     // the user should make a decision before continuing.
     //
     // TODO: if the decision is found, add the tool and

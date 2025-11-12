@@ -39,10 +39,12 @@ export type MyMessage = UIMessage<
       toolId: string;
       decision: ToolApprovalDecision;
     };
-    // TODO: declare an approval-end part that contains
-    // the output of the tool. This should contain
-    // the id and output of the tool.
-    'approval-end': TODO;
+    'approval-end': {
+      toolId: string;
+      output: {
+        message: string;
+      };
+    };
   }
 >;
 

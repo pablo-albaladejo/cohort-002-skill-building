@@ -21,21 +21,14 @@ export const findDecisionsToProcess = (opts: {
   const { mostRecentUserMessage, mostRecentAssistantMessage } =
     opts;
 
-  // TODO: If there's no assistant message in the chat,
-  // there's nothing to process and we can proceed with
-  // the conversation.
   if (!mostRecentAssistantMessage) {
     return [];
   }
 
-  // TODO: Get all the tools from the assistant message
-  // and return them in an array.
   const tools = mostRecentAssistantMessage.parts
     .filter((part) => part.type === 'data-approval-request')
     .map((part) => part.data.tool);
 
-  // TODO: Get all the decisions that the user has made
-  // and return them in a map.
   const decisions = new Map(
     mostRecentUserMessage.parts
       .filter((part) => part.type === 'data-approval-decision')

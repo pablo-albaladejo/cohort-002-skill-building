@@ -46,6 +46,8 @@ export type MyMessage = UIMessage<
       toolId: string;
       decision: ToolApprovalDecision;
     };
+    // NOTE: I've added an approval-result part to the MyMessage
+    // type, so that we can store the output of the tool.
     'approval-result': {
       output: ToolRequiringApprovalOutput;
       // The original tool ID that this output is for.
@@ -80,12 +82,8 @@ const annotateMessageHistory = (
           };
         }
 
-        if (part.type === 'data-approval-result') {
-          return {
-            type: 'text',
-            text: `The tool was performed: ${part.data.output.message}`,
-          };
-        }
+        // TODO: add a case for data-approval-result for after the tool
+        // has been executed.
         return part;
       },
     },
@@ -144,9 +142,6 @@ export const POST = async (req: Request): Promise<Response> => {
           // TODO: we should also add a data-approval-result
           // part to the messages array, and write it to
           // the frontend.
-          //
-          // NOTE: I've provided you with a MyMessagePart
-          // above, which should prove useful.
         }
       }
 

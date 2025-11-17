@@ -1,116 +1,36 @@
-Now that we've passed all the information to the LLM, we need to process the decisions that users make into actual actions.
+Right now, the system allows users to approve or reject tool calls, but there's no validation preventing users from sending random messages instead. They should be forced to either approve or reject pending requests before the conversation can continue.
 
-In this exercise, we'll be working on processing human-in-the-loop (HITL) decisions for actions like sending emails.
+The message history has two states: valid (all tool requests have decisions) and invalid (some requests lack decisions). We need to validate incoming messages and link tool requests with their corresponding user decisions.
 
-## Declaring the `approval-end` Part
+This validation happens in the `findDecisionsToProcess` function, which takes the most recent user and assistant messages and returns either a validation error or a set of decisions ready to process.
 
-First, we need to declare our third custom data part - an `approval-end` part that contains the output of the tool.
+## Steps To Complete
 
-This will help us track the entire lifecycle of an action from request to completion.
+### Understanding the Function Structure
 
-In the [`api/chat.ts`](./api/chat.ts) file, we need to complete the type definition for the `approval-end` part:
+- [ ] Review the `findDecisionsToProcess` function in `api/hitl-processor.ts`
 
-```ts
-export type MyMessage = UIMessage<
-  unknown,
-  {
-    // ...existing parts...
-
-    // TODO: declare an approval-end part that contains
-    // the output of the tool. This should contain:
-    // - the action ID
-    // - the output of the action (in this case, a message
-    // that the email was sent)
-    'approval-end': TODO;
-  }
->;
-```
-
-We need to define what data an approval-end part should contain - at minimum, it should include the action ID and information about the output.
-
-## Updating the Diary Function
-
-Next, we need to update the `getDiary` function to handle approval-end parts. This function transforms message parts into a readable format for the LLM:
-
-```ts
-// inside the getDiary function
-if (part.type === 'data-approval-end') {
-  // TODO: if the part is a data-approval-end,
-  // return a string that describes the output of
-  // the tool.
-}
-```
-
-## Handling Missing User Messages
-
-In the `POST` handler, we need to add validation to ensure we have a valid user message:
-
-```ts
-export const POST = async (req: Request): Promise<Response> => {
-  const body: { messages: MyMessage[] } = await req.json();
-  const { messages } = body;
-
-  const mostRecentUserMessage = messages[messages.length - 1];
-
-  // TODO: return a Response of status 400 if there's
-  // no most recent user message.
-
-  // ...existing code...
-};
-```
-
-## Processing Decisions
-
-Finally, we need to implement the `findDecisionsToProcess` function, which:
-
-1. Gets actions from the assistant message
-2. Gets decisions from the user message
-3. Matches them up and returns approval-decision pairs to process
+The function already has scaffolding in place. It takes two arguments and returns either a `HITLError` or an array of `HITLDecisionsToProcess` items.
 
 ```ts
 export const findDecisionsToProcess = (opts: {
   mostRecentUserMessage: MyMessage;
   mostRecentAssistantMessage: MyMessage | undefined;
 }): HITLError | HITLDecisionsToProcess[] => {
-  const { mostRecentUserMessage, mostRecentAssistantMessage } =
-    opts;
-
-  // NOTE: If there's no assistant message in the chat,
-  // there's nothing to process and we can proceed with
-  // the conversation.
-  if (!mostRecentAssistantMessage) {
-    return [];
-  }
-
-  // TODO: Get all the actions from the assistant message
-  // and return them in an array.
-  const actions = TODO;
-
-  // TODO: Get all the decisions that the user has made
-  // and return them in a map.
-  const decisions = TODO;
-
-  const decisionsToProcess: HITLDecisionsToProcess[] = [];
-
-  for (const action of actions) {
-    const decision = decisions.get(tool.id);
-
-    // TODO: if the decision is not found, return an error -
-    // the user should make a decision before continuing.
-    //
-    // TODO: if the decision is found, add the action and
-    // decision to the decisionsToProcess array.
-  }
-
-  return decisionsToProcess;
+  // TODO: implementation
 };
 ```
 
-This function ensures we have all the necessary information before proceeding with any actions, providing a safety mechanism for our application.
+- [ ] Understand where this function is called in `api/chat.ts`
 
-You can also return a `HITLError` if the user hasn't made a decision for an tool. This has already been scaffolded for you in the `POST` route.
+The POST route calls `findDecisionsToProcess` and checks if it returns a `HITLError`. If it does, a Response with the error message is returned to the frontend.
 
 ```ts
+const hitlResult = findDecisionsToProcess({
+  mostRecentUserMessage,
+  mostRecentAssistantMessage,
+});
+
 // NOTE: if hitlResult returns a HITLError,
 // we should return a Response with the error message
 if ('status' in hitlResult) {
@@ -120,35 +40,105 @@ if ('status' in hitlResult) {
 }
 ```
 
-## Testing
+### Extracting Tools Requiring Approval
 
-When fully implemented, you'll be able to nearly see the complete flow: the assistant requests an action, the user makes a decision, and the system processes that decision accordingly.
+- [ ] Extract all tool requests from the most recent assistant message
 
-All that's left is executing the action, which we'll cover in the next exercise.
+Map over the [`parts`](/PLACEHOLDER/message-parts) of the assistant message and filter for `data-approval-request` types. Extract the `tool` data from each part.
 
-To see if it's working, I've also added a `console.dir` just before the `createUIMessageStream` call:
+```ts
+// TODO: Get all the tools requiring approval from the assistant message
+// and return them in an array.
+const tools: ToolRequiringApproval[] = TODO;
+```
+
+Store these in a `tools` array that you'll use later.
+
+### Extracting User Decisions
+
+- [ ] Extract all decisions from the most recent user message
+
+Map over the [`parts`](/PLACEHOLDER/message-parts) of the user message and filter for `data-approval-decision` types. Create a [`Map`](/PLACEHOLDER/javascript-map) where the key is the `toolId` and the value is the user's decision.
+
+```ts
+// TODO: Get all the decisions that the user has made
+// and return them in a map.
+const decisions: Map<string, ToolApprovalDecision> = TODO;
+```
+
+This map structure makes it easy to look up whether a decision exists for a specific tool.
+
+### Validating Decisions Exist for All Tools
+
+- [ ] Loop through each tool requiring approval
+
+For each tool, check if a corresponding decision exists in the `decisions` map using the tool's `id`.
+
+```ts
+for (const tool of tools) {
+  const decision: ToolApprovalDecision | undefined =
+    decisions.get(tool.id);
+
+  // TODO: if the decision is not found, return a HITLError -
+  // the user should make a decision before continuing.
+  //
+  // TODO: if the decision is found, add the tool and
+  // decision to the decisionsToProcess array.
+}
+```
+
+- [ ] Return a `HITLError` if a decision is missing
+
+When a tool has no corresponding decision, return a `HITLError` with a descriptive message and status code 400.
+
+- [ ] Add valid tool-decision pairs to the results
+
+When a decision is found, add an object containing both the tool and the decision to the `decisionsToProcess` array.
+
+### Validating Message History Structure
+
+- [ ] Add validation in `api/chat.ts`
+
+Look for the TODO comment in the POST route handler. You need to validate that:
+
+1. The messages array has at least one message
+2. The most recent message is a user message
+
+```ts
+const mostRecentUserMessage = messages[messages.length - 1];
+
+// TODO: return a Response of status 400 if there
+// is no most recent user message.
+```
+
+If either condition fails, return a Response with status 400 and an appropriate error message.
+
+### Testing the Validation
+
+- [ ] Run the application with `pnpm run dev`
+
+- [ ] Send an initial message to the assistant
+
+Type "Send an email to team@aihero.dev saying what a fantastic AI workshop I'm currently attending. Thank them for the workshop." and submit.
+
+- [ ] Attempt to send another message without approving or rejecting
+
+Try typing a message without clicking Approve or Reject on the pending tool request.
+
+- [ ] Verify the error is returned
+
+The server should return a `400` status code and an error message.
+
+- [ ] Approve or reject the tool request
+
+Click the Approve or Reject button and verify that the server returns a `200` status code and an array of decisions to process.
+
+- [ ] Check the server console
+
+Run the application and look for console output showing the `hitlResult` being logged:
 
 ```ts
 console.dir(hitlResult, { depth: null });
 ```
 
-So you'll be able to see the decisions that are being processed as you're testing.
-
-Good luck, and I'll see you in the solution!
-
-## Steps To Complete
-
-- [ ] Complete the `'approval-end'` type definition in [`api/chat.ts`](./api/chat.ts) to include the action ID and output information
-
-- [ ] Update the `getDiary` function to handle `data-approval-end` parts by returning a string that describes the action output
-
-- [ ] Add validation in the POST handler to return a 400 response if there's no most recent user message
-
-- [ ] Implement the `findDecisionsToProcess` function to:
-  - Get actions from the assistant message
-  - Get decisions from the user message
-  - Match them up and return approval-decision pairs to process
-  - Return a `HITLError` if the user hasn't made a decision for an action
-- [ ] Test your implementation by running the local dev server and checking if the console logs show the correct approval-decision pairs
-
-- [ ] Note that `sendEmail` still won't be executed yet - we'll do that in the next exercise
+You should see an array of decisions to process, each containing a tool and its corresponding decision.

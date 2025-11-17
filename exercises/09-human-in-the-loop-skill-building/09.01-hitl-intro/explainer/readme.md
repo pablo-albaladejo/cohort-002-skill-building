@@ -1,40 +1,30 @@
-In the next few exercises, we're going to explore one of my favorite patterns when working with AI: human in the loop.
+In this section, we're going to explore one of the most essential UX patterns you need to know if you're building a personal assistant or building any kind of AI that's supposed to do actual things in the world.
 
-Giving power to an LLM is a double-edged sword. The less power you give to an LLM, the less useful it is, the less it can actually do in the world. But then the more power that you give it, the more risk that you incur.
+That pattern is **human in the loop**.
 
-You may want an LLM to help you draft some emails. Drafting the email is perfectly fine, but do we want to be able to allow the LLM to _send_ the email too?
+Instead of giving the AI full power to do anything it wants in the world, you make it check with you first before actually going and doing anything.
 
-Ideally, we want to hand over quite a lot of power to the LLM to make it more useful. But we also want to be allowed to check the LLM's work before it goes off and does crazy things.
+## The ASDK v6 Announcement
 
-That's what human in the loop does. It adds human checks into the loop to make sure that the LLM is always on task.
+This material is in a funny spot because the [AI SDK](/PLACEHOLDER/ai-sdk) announced [v6](https://v6.ai-sdk.dev/docs/announcing-ai-sdk-6-beta) recently, which just adds a small extra couple of features on top of v5.
 
-## Why Build It Yourself?
+| Version Jump | Size  |
+| ------------ | ----- |
+| v4 to v5     | Large |
+| v5 to v6     | Small |
 
-AI SDK has first-class HITL support. So why build from scratch?
+One of the features they did announce was human in the loop. This is where you can specify [tool execution approval](/PLACEHOLDER/tool-execution-approval) by just adding `needsApproval: true` to a [tool definition](/PLACEHOLDER/tool-definition).
 
-Understanding internals enables powerful extensions. Lesson 08.03 shows thread-scoped permissions - approving a tool once grants access for entire conversation. First-class solutions don't provide this. Building yourself = control over approval flows, permission models, custom behaviors.
+This is really great—it's obviously fantastic that this is baked into the [AI SDK](/PLACEHOLDER/ai-sdk) itself.
 
-## Custom Data Parts
+However, v6 is still in beta, and I don't yet feel comfortable teaching it - it's not yet stable enough.
 
-We're going to be building a human in the loop system with the AI SDK's custom data parts.
+## Building It Ourselves
 
-And conceptually, these data parts are going to represent an 'action' in several stages.
+Instead, we're going to be building this ourselves using [custom data parts](/PLACEHOLDER/custom-data-parts).
 
-| Data Part                | Description                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `data-approval-request`  | Signals when the LLM wants to begin an action – i.e. it's requesting to send an email.                         |
-| `data-approval-decision` | Captures the user's approval or rejection of the proposed action – i.e. whether to send the email or not.      |
-| `data-approval-end`      | Confirms when the action has been completed (only after approval) – i.e. the email has been sent successfully. |
+This is an incredibly valuable exercise because it teaches you how powerful custom data parts are as an abstraction.
 
-## The Flow
+Once you've built human in the loop with them, I promise you can build really anything with them.
 
-These will be used like so:
-
-| Step                   | Description                                                                                                                                           | Data Part                |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| **LLM Initiates Tool** | When the LLM decides to perform a tool (like sending an email), it 'starts' the tool.                                                                 | `data-approval-request`  |
-| **Human Review**       | The system pauses execution and presents the proposed action to the user for review.                                                                  | _(none)_                 |
-| **User Decision**      | The user can either approve or reject the action, which creates a `data-approval-decision` event. If rejected, they provide a reason to help improve. | `data-approval-decision` |
-| **Tool Execution**     | Only after approval does the system proceed with `data-approval-end` and actually execute the tool.                                                   | `data-approval-end`      |
-
-In the next few exercises, we're going to be building this.
+In terms of human-in-the-loop, I always think it's better to learn things by building them from scratch.

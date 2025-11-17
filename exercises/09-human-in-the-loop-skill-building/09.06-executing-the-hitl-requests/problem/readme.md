@@ -1,113 +1,151 @@
-We've now got every part of our loop built. We are figuring out exactly which decisions we need to execute.
+We've built the scaffolding to request human approval for tool calls, but now we need to actually execute those approved tools and communicate the results back to the LLM.
 
-So, it's finally time to hook our LLM up to the `sendEmail` call that we started with at the very start of this exercise.
+The tricky part is that the LLM needs to know what happened when we called the tool. We can't just silently execute the tool and move on - we need to add the tool's output to our message history so the LLM can see the result and continue the conversation intelligently.
 
-## The `createUIMessageStream` Function
+## Steps To Complete
 
-We're going to be spending most of this exercise inside the `createUIMessageStream` function. The scaffolding code provided includes an iteration over each member of the `hitlResult`, which is an array of HITL decisions to process.
+### Adding Approval Result Conversion
 
-### The `approve` Branch
+- [ ] Open the `annotateMessageHistory` function in `api/chat.ts`
 
-Inside the loop, there's an if statement checking `decision.type === 'approve'`. If we're inside this statement, then the user has approved the action and we should finally send the email:
+  This function converts our custom message data parts into text that the LLM can understand. We need to add a case for when a tool has been executed.
+
+- [ ] Add a conversion case for the `data-approval-result` part type
+
+  When the `part.type` is `'data-approval-result'`, convert it to a text message that describes what happened when the tool was called.
+
+```ts
+const annotateMessageHistory = (
+  messages: MyMessage[],
+): ModelMessage[] => {
+  const modelMessages = convertToModelMessages<MyMessage>(
+    messages,
+    {
+      convertDataPart(part) {
+        if (part.type === 'data-approval-request') {
+          return {
+            type: 'text',
+            text: `The assistant requested to send an email: To: ${part.data.tool.to}, Subject: ${part.data.tool.subject}, Content: ${part.data.tool.content}`,
+          };
+        }
+        if (part.type === 'data-approval-decision') {
+          if (part.data.decision.type === 'approve') {
+            return {
+              type: 'text',
+              text: 'The user approved the tool.',
+            };
+          }
+          return {
+            type: 'text',
+            text: `The user rejected the tool: ${part.data.decision.reason}`,
+          };
+        }
+
+        // TODO: add a case for data-approval-result for after the tool
+        // has been executed.
+        return part;
+      },
+    },
+  );
+
+  return modelMessages;
+};
+```
+
+Use `part.data.output.message` to include the tool's result in the text response.
+
+### Executing Approved Tools
+
+- [ ] Locate the approval processing loop inside `createUIMessageStream` in `api/chat.ts`
+
+  This is where we iterate through all the decisions the user made. Right now it only has scaffolding.
+
+- [ ] When the decision type is `'approve'`, execute the tool
+
+  Call the `sendEmail` function with the tool's email details. You can find `sendEmail` already imported at the top of the file.
 
 ```ts
 for (const { tool, decision } of hitlResult) {
   if (decision.type === 'approve') {
-    // TODO: the user has approved the action, so
+    // TODO: the user has approved the tool, so
     // we should send the email!
     //
-    // TODO: we should also add a data-approval-end
+    // TODO: we should also add a data-approval-result
     // part to the messages array, and write it to
     // the frontend.
   }
 }
 ```
 
-Once the message is sent, we need to add the `data-approval-end` part and do two things with it:
+### Writing Tool Results To The Stream
 
-1. Use `writer.write` to actually write it to the front end, so the frontend stays in sync with the backend state
-2. Add it to an array of `messagesAfterHitl` that we'll need to create, in the code below:
+- [ ] After executing the tool, create a `data-approval-result` message part
 
-```ts
-// TODO: when we process the decisions, we'll
-// be modifying the messages to include the
-// data-approval-end parts.
-// This means that we'll need to make a copy of
-// the messages array, and update it.
-const messagesAfterHitl = TODO;
-```
+  This part should include the tool's `id`, the `output` from executing the tool, and reference the original `toolId`.
 
-We need this `messagesAfterHitl` array because after processing the decisions, we'll call the LLM again using the `getDiary` function.
+- [ ] Use the `writer.write()` method to send this result to the frontend
+
+  The writer is already available in the `execute` function parameter. This sends the result as it happens, so users see feedback immediately.
 
 ```ts
-// TODO: instead of referring to the 'messages' (the ones
-// we got from the frontend), we'll need to reference
-// the 'messagesAfterHitl' array.
-// If we don't do this, our LLM won't see the outputs
-// of the actions that we've performed.
-prompt: getDiary(messages),
-```
+for (const { tool, decision } of hitlResult) {
+  if (decision.type === 'approve') {
+    // Call sendEmail here...
 
-If we don't update our messages array, the LLM won't see the output of the actions we've performed.
+    const messagePart = {
+      type: 'data-approval-result' as const,
+      data: {
+        toolId: tool.id,
+        output: {
+          type: tool.type,
+          message: 'Email sent!',
+        },
+      },
+    };
 
-To give you a hand with creating the `data-approval-end` message parts, I've given you a `MyMessagePart` type that will be useful for creating these message parts:
+    // TODO: Write the result of the tool to the stream
+    // with writer.write
 
-```ts
-type MyMessagePart = MyMessage['parts'][number];
-```
-
-This represents an individual part of a message - `data-approval-request`, `data-approval-decision`, or `data-approval-end` - as well as the native parts like `text` and `reasoning`.
-
-### The `reject` Branch
-
-For the reject branch, we'll do something similar - we won't send the email, but we still need to update the message history with the user's feedback.
-
-This will be noted in the `getDiary` function, which records that the user rejected the action and their reason:
-
-```ts
-// inside the getDiary function
-if (part.type === 'data-approval-end') {
-  if (part.data.output.type === 'send-email') {
-    return `The user rejected the action: ${part.data.output.reason}`;
+    // TODO: Add the message part to the messages array
+    // with messagesAfterHitl[...].parts.push(messagePart);
   }
 }
 ```
 
-### Fixing The Diary
+### Adding Results To Message History
 
-Finally, we need to update the `streamText` call to use our updated message history:
+- [ ] Add the `data-approval-result` message part to the `messagesAfterHitl` array
+
+  Notice there's already a variable called `messagesAfterHitl` at the top of the approval processing loop. This is a copy of the messages array we can safely modify.
+
+- [ ] Push the result part to the last message's parts array
+
+  The last message in the array is where we should add the result.
 
 ```ts
-// TODO: instead of referring to the 'messages' (the ones
-// we got from the frontend), we'll need to reference
-// the 'messagesAfterHitl' array.
-prompt: getDiary(messages),
+messagesAfterHitl[messagesAfterHitl.length - 1]!.parts.push(
+  messagePart,
+);
 ```
 
-Once we've completed these changes, we should be able to test the entire flow: asking the assistant to create an email, approving or rejecting it, and seeing the results either in the console logs (for sent emails) or in the continued conversation.
+### Testing The Complete Flow
 
-Good luck, and I'll see you in the solution!
+- [ ] Run the application with `pnpm run dev`
 
-## Steps To Complete
+  The dev server will start at `localhost:3000`.
 
-- [ ] Make `messagesAfterHitl` a copy of the `messages` we get from the frontend.
+- [ ] Send the initial message and approve the email
 
-- [ ] In the `approve` branch of the check for `decision.type === 'approve'`:
-  - [ ] Call `sendEmail()` with the action's `to`, `subject`, and `content`
-  - [ ] Create a message part with type `data-approval-end` showing the action succeeded. Use the `MyMessagePart` type to type it.
-  - [ ] Use `writer.write()` to update the frontend
-  - [ ] Add the message part to the most recent message in `messagesAfterHitl`
+  The LLM will request to send an email. Click the "Approve" button to execute it.
 
-- [ ] In the rejection branch:
-  - [ ] Create a message part with type `data-approval-end` showing the action was rejected. Use the `MyMessagePart` type to type it.
-  - [ ] Use `writer.write()` to update the frontend
-  - [ ] Add the message part to the most recent message in `messagesAfterHitl`
+- [ ] Check the server console for confirmation
 
-- [ ] Change `prompt: getDiary(messages)` to reference the `messagesAfterHitl` array
+  Look for a console log showing the email was sent. The `sendEmail` function logs to the console when it succeeds.
 
-- [ ] Test by:
-  - [ ] Running the local dev server
-  - [ ] Asking the assistant to send an email
-  - [ ] Approving or rejecting the email
-  - [ ] Checking console logs to see if the email was sent (if approved)
-  - [ ] Continuing the conversation to see if the LLM acknowledges what happened
+- [ ] Verify the LLM continues the conversation
+
+  After the tool executes, the LLM should respond, acknowledging that the email was sent. It should have received the approval result in the message history.
+
+- [ ] Test rejection flow
+
+  Send another message to generate a new email request. Click "Reject" and provide feedback on what should be improved. The LLM should generate a new version of the email based on your feedback.

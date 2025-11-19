@@ -1,12 +1,10 @@
-# Building Multi-Tool Email Agents
-
 So far, our email search tools have relied on semantic search and clever algorithms. This works well when we want to be vague with our prompts, but it limits what we can do.
 
 The real power comes from giving the LLM multiple tools to choose from. Instead of just searching, we want to let it filter emails by various criteria - almost like querying an SQL database. When the agent can pick and choose between search and filter tools, it can provide much more accurate and targeted results.
 
 Let's build this multi-tool system.
 
-## Adding The Filter Emails Tool
+## Adding the Filter Emails Tool
 
 <!-- VIDEO -->
 
@@ -26,6 +24,7 @@ import { loadEmails } from '@/app/search';
 import { tool } from 'ai';
 import { z } from 'zod';
 
+// ADDED: New tool for filtering emails by exact criteria
 export const filterEmailsTool = tool({
   description:
     "Filter emails by exact criteria like sender, recipient, date range, or text content. Use this for precise filtering (e.g., 'emails from John', 'emails before 2024-01-01', 'emails containing invoice').",
@@ -109,6 +108,7 @@ export const filterEmailsTool = tool({
 <Spoiler>
 
 ```typescript
+// CHANGED: Add filtering logic inside the execute function
 if (from) {
   const lowerFrom = from.toLowerCase();
   filtered = filtered.filter((email) =>
@@ -145,7 +145,7 @@ if (after) {
   filtered = filtered.filter((email) => email.timestamp > after);
 }
 
-// Apply limit
+// CHANGED: Apply limit and return results
 const results = filtered.slice(0, limit);
 
 console.log(
@@ -179,6 +179,7 @@ import { filterEmailsTool } from './filter-tool';
 <Spoiler>
 
 ```typescript
+// CHANGED: Add filterEmailsTool to the tools object
 const getTools = (messages: UIMessage[]) => ({
   search: searchTool(messages),
   filterEmails: filterEmailsTool,
@@ -194,6 +195,7 @@ const getTools = (messages: UIMessage[]) => ({
 <Spoiler>
 
 ```txt
+// CHANGED: Update system prompt with tool selection logic
 <rules>
 - You have TWO tools available: 'search' and 'filterEmails'
 - Choose the appropriate tool based on the query type:
@@ -224,6 +226,7 @@ const getTools = (messages: UIMessage[]) => ({
 <Spoiler>
 
 ```typescript
+// CHANGED: Update the-ask to reflect multi-tool approach
 <the-ask>
 Here is the user's question. Use the appropriate tool(s) first, then provide your answer based on what you find.
 </the-ask>
@@ -249,7 +252,7 @@ pnpm dev
 
 - [ ] Compare with semantic search queries (like "emails about the project") to confirm the model uses the `search` tool instead when appropriate
 
-## Display filterEmails Tool in Frontend
+## Displaying the Filter Emails Tool in Frontend
 
 <!-- VIDEO -->
 
@@ -259,13 +262,15 @@ We're adding a new tool display case for the `filterEmails` tool in the chat com
 
 #### Add the filterEmails tool case to the message parts switch
 
-- [ ] Open `src/app/chat.tsx` and locate the switch statement that handles different message part types (around line 135).
+- [ ] Open `src/app/chat.tsx` and locate the switch statement that handles different message part types (around line 135)
 
-- [ ] After the `case "tool-search":` block, add a new case for `"tool-filterEmails"`:
+- [ ] After the `case "tool-search":` block, add a new case for `"tool-filterEmails"`
 
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
+// ADDED: New case to display filterEmails tool results
 case "tool-filterEmails":
   return (
     <Tool
@@ -280,7 +285,7 @@ case "tool-filterEmails":
       />
       <ToolContent>
         <div className="space-y-4 p-4">
-          {/* Input parameters */}
+          {/* ADDED: Display filter input parameters */}
           {part.input && (
             <div className="space-y-2">
               <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
@@ -325,12 +330,12 @@ case "tool-filterEmails":
             </div>
           )}
 
-          {/* Email results */}
+          {/* ADDED: Display email results from filter */}
           {part.state === "output-available" && part.output && (
             <EmailResultsGrid emails={part.output.emails} />
           )}
 
-          {/* Error state */}
+          {/* ADDED: Display error state if filter fails */}
           {part.state === "output-error" && (
             <div className="space-y-2">
               <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
@@ -351,11 +356,13 @@ case "tool-filterEmails":
 
 #### Update the EmailResultsGrid component
 
-- [ ] Update the `EmailResultsGrid` component to remove the `score` property from the emails type definition:
+- [ ] Update the `EmailResultsGrid` component to remove the `score` property from the emails type definition
 
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
+// CHANGED: Remove score property since filterEmails doesn't return scores
 const EmailResultsGrid = ({
   emails,
 }: {

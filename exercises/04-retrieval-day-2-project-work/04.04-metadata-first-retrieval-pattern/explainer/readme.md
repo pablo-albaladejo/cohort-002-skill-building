@@ -123,7 +123,8 @@ description:
 <Spoiler>
 
 ```typescript
-// Return metadata with snippets only
+// src/app/api/chat/search-tool.ts
+// CHANGED: Return metadata with snippets only
 const topEmails = rerankedResults.map((r) => {
   // Get full email to extract threadId
   const fullEmail = emails.find((e) => e.id === r.email.id);
@@ -159,9 +160,11 @@ import { getEmailsTool } from './get-emails-tool';
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
 const getTools = (messages: UIMessage[]) => ({
   search: searchTool(messages),
   filterEmails: filterEmailsTool,
+  // ADDED: New tool for fetching full email content
   getEmails: getEmailsTool,
 });
 ```
@@ -175,6 +178,7 @@ const getTools = (messages: UIMessage[]) => ({
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
 system: `
 <task-context>
 You are an email assistant that helps users find and understand information from their emails.
@@ -217,7 +221,7 @@ You are an email assistant that helps users find and understand information from
 <the-ask>
 Here is the user's question. Follow the multi-step workflow above to efficiently find and retrieve the information.
 </the-ask>
-`;
+`,
 ```
 
 </Spoiler>
@@ -229,6 +233,7 @@ Here is the user's question. Follow the multi-step workflow above to efficiently
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
 case "tool-getEmails":
   return (
     <Tool
@@ -295,6 +300,8 @@ case "tool-getEmails":
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
+// ADDED: Component to display full email content
 const FullEmailDisplay = ({
   emails,
 }: {
@@ -354,6 +361,8 @@ const FullEmailDisplay = ({
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
+// CHANGED: Display snippets instead of full bodies
 const EmailResultsGrid = ({
   emails,
 }: {
@@ -424,32 +433,32 @@ pnpm dev
 
 - [ ] Ask the assistant for recent emails: "Give me the most recent 10 email bodies".
 
-The assistant should now call `filterEmails` first to get metadata with snippets, then call `getEmails` with specific IDs to fetch full content.
+The assistant should call `filterEmails` first to get metadata with snippets, then call `getEmails` with specific IDs to fetch full content.
 
 - [ ] Ask a semantic search question: "Who is Sarah mentoring in climbing?"
 
-The assistant should search for relevant emails, review the snippets, then
-selectively fetch only the emails needed to answer the question completely.
+The assistant should search for relevant emails, review the snippets, then selectively fetch only the emails needed to answer the question completely.
 
 - [ ] Verify that snippets appear in the search/filter results, and full content only appears after calling `getEmails`.
 
-## Added `includeThread`
+## Adding Thread Support
 
 <!-- VIDEO -->
 
-Let's add a boolean parameter to the `getEmailsTool` to allow the LLM to fetch entire email conversation threads instead of just individual emails. This will allow it to navigate the graph of related messages and provide better context-aware responses.
+Let's add a boolean parameter to the `getEmailsTool` to allow the LLM to fetch entire email conversation threads instead of just individual emails. This enables better context-aware responses.
 
 ### Steps To Complete
 
 #### Update the `getEmailsTool` description and schema
 
-- [ ] Open `src/app/api/chat/get-emails-tool.ts` and update the tool description to mention thread support
+- [ ] Open `src/app/api/chat/get-emails-tool.ts` and update the tool description to mention thread support.
 
-- [ ] Add an `includeThread` boolean parameter to the input schema with a default value of `false`
+- [ ] Add an `includeThread` boolean parameter to the input schema with a default value of `false`.
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/get-emails-tool.ts
 export const getEmailsTool = tool({
   description:
     "Fetch full content of specific emails by their IDs. Use this after searching/filtering to retrieve complete email bodies. Optionally include entire conversation threads.",
@@ -457,6 +466,7 @@ export const getEmailsTool = tool({
     ids: z
       .array(z.string())
       .describe("Array of email IDs to retrieve full content for"),
+    // ADDED: New parameter to fetch entire threads
     includeThread: z
       .boolean()
       .describe(
@@ -475,6 +485,8 @@ export const getEmailsTool = tool({
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/get-emails-tool.ts
+// CHANGED: Add includeThread parameter and logic
 execute: async ({ ids, includeThread }) => {
   console.log("Get emails params:", { ids, includeThread });
 
@@ -516,16 +528,18 @@ execute: async ({ ids, includeThread }) => {
 
 #### Update system prompt guidance
 
-- [ ] Open `src/app/api/chat/route.ts` and locate the system prompt for the chat assistant
+- [ ] Open `src/app/api/chat/route.ts` and locate the system prompt for the chat assistant.
 
-- [ ] Add guidance about when to use `includeThread=true` and `includeThread=false`
+- [ ] Add guidance about when to use `includeThread=true` and `includeThread=false`.
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
   STEP 3 - Fetch full content:
   USE 'getEmails' to retrieve full email bodies:
   - Pass array of email IDs you need to read completely
+  // ADDED: Thread context guidance
   - Set includeThread=true if you need conversation context (replies, full thread)
   - Set includeThread=false for individual emails
 ```
@@ -534,13 +548,14 @@ execute: async ({ ids, includeThread }) => {
 
 #### Display thread parameter in frontend
 
-- [ ] Open `src/app/chat.tsx` and find the `tool-getEmails` case in the message rendering logic
+- [ ] Open `src/app/chat.tsx` and find the `tool-getEmails` case in the message rendering logic.
 
-- [ ] Add a display line showing whether `includeThread` is enabled
+- [ ] Add a display line showing whether `includeThread` is enabled.
 
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
 case "tool-getEmails":
   return (
     <Tool
@@ -571,8 +586,8 @@ case "tool-getEmails":
                     {part.input.ids.length !== 1 ? "s" : ""}
                   </div>
                 )}
+                {/* ADDED: Display includeThread parameter */}
                 <div>
-                  {/* ADDED: includeThread logic */}
                   <span className="font-medium">
                     Include Thread:
                   </span>{" "}
@@ -589,7 +604,7 @@ case "tool-getEmails":
 
 #### Start the development server
 
-- [ ] Run the development server to test the changes
+- [ ] Run the development server to test the changes.
 
 ```bash
 pnpm dev
@@ -597,8 +612,8 @@ pnpm dev
 
 - [ ] Ask a question requiring full email context, such as "What was the full email history between Sarah and the mortgage broker?"
 
-- [ ] Verify the assistant uses the `getEmails` tool with `includeThread: true`
+- [ ] Verify the assistant uses the `getEmails` tool with `includeThread: true`.
 
-- [ ] Check that the tool output shows "Include Thread: Yes"
+- [ ] Check that the tool output shows "Include Thread: Yes".
 
-- [ ] Confirm that multiple emails from the same thread are returned and sorted by timestamp
+- [ ] Confirm that multiple emails from the same thread are returned and sorted by timestamp.

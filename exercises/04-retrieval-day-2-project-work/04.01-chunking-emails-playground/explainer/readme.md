@@ -229,23 +229,24 @@ Let's add text splitting functionality to chunk emails into smaller pieces for b
 
 ### Steps To Complete
 
-- [ ] Add `@langchain/textsplitters` to your dependencies
+- [ ] Add `@langchain/textsplitters` to your dependencies:
 
 ```bash
 pnpm add @langchain/textsplitters
 ```
 
-- [ ] Import `RecursiveCharacterTextSplitter` from `@langchain/textsplitters` in `src/app/search.ts`
+- [ ] Import `RecursiveCharacterTextSplitter` from `@langchain/textsplitters` in `src/app/search.ts`:
 
 ```typescript
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 ```
 
-- [ ] Add a new `EmailChunk` type that represents a chunk of an email with its metadata
+- [ ] Add a new `EmailChunk` type that represents a chunk of an email with its metadata:
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 export type EmailChunk = {
   id: string;
   subject: string;
@@ -260,11 +261,12 @@ export type EmailChunk = {
 
 </Spoiler>
 
-- [ ] Create a `RecursiveCharacterTextSplitter` instance with appropriate separators for email content. We'll use a chunk size of 1000 characters and an overlap of 100 characters. We'll also use the following separators: `\n\n`, `\n`, ` `, and `''`.
+- [ ] Create a `RecursiveCharacterTextSplitter` instance with appropriate separators for email content. Use a chunk size of 1000 characters and an overlap of 100 characters. Use these separators: `\n\n`, `\n`, ` `, and `''`.
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 const textSplitter = new RecursiveCharacterTextSplitter({
   chunkSize: 1000,
   chunkOverlap: 100,
@@ -274,11 +276,12 @@ const textSplitter = new RecursiveCharacterTextSplitter({
 
 </Spoiler>
 
-- [ ] Implement the `chunkEmails` function that takes an array of emails and returns chunked email objects
+- [ ] Implement the `chunkEmails` function that takes an array of emails and returns chunked email objects:
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 export const chunkEmails = async (emails: Email[]) => {
   const emailsWithChunks: EmailChunk[] = [];
   for (const email of emails) {
@@ -303,7 +306,7 @@ export const chunkEmails = async (emails: Email[]) => {
 
 </Spoiler>
 
-## Applied Chunking Functions to Search Algorithms
+## Applying Chunking Functions to Search Algorithms
 
 <!-- VIDEO -->
 
@@ -324,6 +327,7 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 // CHANGED: emailToText -> emailChunkToText
 // CHANGED: Email -> EmailChunk
 // CHANGED: email.body -> email.chunk
@@ -340,6 +344,7 @@ export const emailChunkToText = (email: EmailChunk) =>
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 // CHANGED: emails: Email[] -> emailChunks: EmailChunk[]
 export async function searchWithBM25(
   keywords: string[],
@@ -371,6 +376,7 @@ export async function searchWithBM25(
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 // CHANGED: emails: Email[] -> emailChunks: EmailChunk[]
 export async function loadOrGenerateEmbeddings(
   emailChunks: EmailChunk[]
@@ -384,6 +390,7 @@ export async function loadOrGenerateEmbeddings(
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 const results: { id: string; embedding: number[] }[] = [];
 // CHANGED: uncachedEmails -> uncachedEmailChunks
 // CHANGED: Email[] -> EmailChunk[]
@@ -414,6 +421,7 @@ for (const emailChunk of emailChunks) {
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
   // CHANGED: if (uncachedEmails.length > 0) -> if (uncachedEmailChunks.length > 0)
   if (uncachedEmailChunks.length > 0) {
     console.log(
@@ -464,6 +472,7 @@ for (const emailChunk of emailChunks) {
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 // CHANGED: emails: Email[] -> emailChunks: EmailChunk[]
 export async function searchWithEmbeddings(
   query: string,
@@ -478,6 +487,7 @@ export async function searchWithEmbeddings(
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
   // Load cached embeddings
   // CHANGED: emails -> emailChunks
   const emailEmbeddings = await loadOrGenerateEmbeddings(emailChunks);
@@ -510,6 +520,7 @@ export async function searchWithEmbeddings(
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 // CHANGED: email: Email -> email: EmailChunk (in both type signatures)
 export function reciprocalRankFusion(
   rankings: { email: EmailChunk; score: number }[][],
@@ -557,6 +568,7 @@ export function reciprocalRankFusion(
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 export const searchWithRRF = async (
   query: string,
   emails: Email[],
@@ -626,6 +638,8 @@ const embeddingResults = searchQuery
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
+
 // Return top 10 full email objects
 const topEmails = rrfResults
   .slice(0, 10)
@@ -648,6 +662,8 @@ const topEmails = rrfResults
 <Spoiler>
 
 ```typescript
+// src/app/search/email-list.tsx
+
 type Email = {
   id: string;
   from: string;
@@ -669,6 +685,8 @@ type Email = {
 <Spoiler>
 
 ```typescript
+// src/app/search/email-list.tsx
+
 // CHANGED: Added chunk information to the heading
 <h3 className="font-semibold text-base mb-0.5">
   {email.subject} (Chunk {email.chunkIndex + 1} of{" "}
@@ -685,6 +703,8 @@ type Email = {
 <Spoiler>
 
 ```typescript
+// src/app/search/page.tsx
+
 const transformedEmails = emailsWithScores
   .map(({ email, score }) => ({
     id: email.id,

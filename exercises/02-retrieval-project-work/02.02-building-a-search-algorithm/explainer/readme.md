@@ -22,15 +22,21 @@ pnpm add okapibm25
 
 #### Creating the `searchWithBM25` function
 
-- [ ] Next, create a new file called `search.ts` in the `src/app` directory, with a `searchWithBM25` function that takes a list of keywords and a list of emails.
+- [ ] Create a new file called `search.ts` in the `src/app` directory with a `searchWithBM25` function that takes keywords and emails.
 
 <Spoiler>
 
 ```typescript
 // src/app/search.ts
-export async function searchWithBM25(keywords: string[], emails: Email[]) {
-  // Combine subject + body for richer text corpus
-  const corpus = emails.map((email) => `${email.subject} ${email.body}`);
+// ADDED: New function to search emails using BM25 algorithm
+export async function searchWithBM25(
+  keywords: string[],
+  emails: Email[],
+) {
+  // Combine subject + body so BM25 searches across both fields
+  const corpus = emails.map(
+    (email) => `${email.subject} ${email.body}`,
+  );
 
   // BM25 returns score array matching corpus order
   const scores: number[] = (BM25 as any)(corpus, keywords);
@@ -39,20 +45,20 @@ export async function searchWithBM25(keywords: string[], emails: Email[]) {
   return scores
     .map((score, idx) => ({ score, email: emails[idx] }))
     .sort((a, b) => b.score - a.score);
-+}
+}
 ```
 
 </Spoiler>
 
 #### Colocating the Search Functionality
 
-- [ ] Let's take the existing `loadEmails` function, and the `Email` interface, and move them to the `search.ts` file.
+- [ ] Move the existing `loadEmails` function and `Email` interface to the `search.ts` file to keep all search-related code together.
 
 <Spoiler>
 
 ```typescript
 // src/app/search.ts
-
+// ADDED: Moved from search page for colocation
 export async function loadEmails(): Promise<Email[]> {
   const filePath = path.join(
     process.cwd(),
@@ -63,7 +69,8 @@ export async function loadEmails(): Promise<Email[]> {
   return JSON.parse(fileContent);
 }
 
-interface Email {
+// ADDED: Moved from search page for colocation
+export interface Email {
   id: string;
   threadId: string;
   from: string;
@@ -84,21 +91,21 @@ interface Email {
 
 #### Updating the Search Page
 
-- [ ] Let's update the search page to use the new `searchWithBM25` function. First, we'll need to import the `loadEmails` function and the `searchWithBM25` function.
+- [ ] Import the `loadEmails` and `searchWithBM25` functions in `src/app/search/page.tsx`.
 
 ```typescript
 // src/app/search/page.tsx
-
+// ADDED: Import new search functions
 import { loadEmails, searchWithBM25 } from '../search';
 ```
 
-- [ ] Next, let's update the search page to use the new `searchWithBM25` function. We'll need to call the function with the query and the list of emails.
+- [ ] Replace the old search logic with `searchWithBM25`. This switches to BM25 ranking instead of basic filtering.
 
 <Spoiler>
 
 ```typescript
 // src/app/search/page.tsx
-
+// CHANGED: Use BM25 search instead of previous filtering logic
 const emailsWithScores = await searchWithBM25(
   query.toLowerCase().split(' '),
   allEmails,
@@ -107,11 +114,12 @@ const emailsWithScores = await searchWithBM25(
 
 </Spoiler>
 
-- [ ] Next, we'll need to change some code in `transformedEmails` to use the new `emailsWithScores` array:
+- [ ] Update `transformedEmails` to map from `emailsWithScores` and include the score.
 
 <Spoiler>
 
 ```typescript
+// CHANGED: Map from emailsWithScores instead of allEmails
 const transformedEmails = emailsWithScores.map(
   ({ email, score }) => ({
     id: email.id,
@@ -120,18 +128,19 @@ const transformedEmails = emailsWithScores.map(
     preview: email.body.substring(0, 100) + '...',
     content: email.body,
     date: email.timestamp,
-    score: score,
+    score: score, // ADDED: Include BM25 score
   }),
 );
 ```
 
 </Spoiler>
 
-- [ ] We'll also need to sort them by score, not date:
+- [ ] Sort emails by BM25 score instead of date.
 
 <Spoiler>
 
 ```typescript
+// CHANGED: Sort by BM25 score descending instead of date
 const transformedEmails = emailsWithScores
   .map(({ email, score }) => ({
     id: email.id,
@@ -142,17 +151,17 @@ const transformedEmails = emailsWithScores
     date: email.timestamp,
     score: score,
   }))
-  // Sorted by score, descending
   .sort((a, b) => b.score - a.score);
 ```
 
 </Spoiler>
 
-- [ ] Finally, we'll need to remove the existing filtering, and just filter on the score:
+- [ ] Filter emails by score instead of string matching to exclude irrelevant results.
 
 <Spoiler>
 
 ```typescript
+// CHANGED: Filter by BM25 score instead of string matching
 const filteredEmails = query
   ? transformedEmails.filter((email) => email.score > 0)
   : transformedEmails;
@@ -162,15 +171,16 @@ const filteredEmails = query
 
 #### Testing
 
-- [ ] You should be able to test the search page by running the development server and searching for a query.
+- [ ] Run the development server and search for a query.
 
 ```bash
+# Terminal
 pnpm dev
 ```
 
-- [ ] You should see the search results sorted by score, descending!
+- [ ] You should see search results sorted by BM25 score in descending order.
 
-## Embeddings Cache
+## Caching Embeddings
 
 <!-- VIDEO -->
 
@@ -178,25 +188,26 @@ Let's implement a system for generating and caching embeddings so we don't regen
 
 ### Steps To Complete
 
-#### Creating the embedding cache infrastructure
+#### Adding embedding imports
 
-- [ ] Add imports to `src/app/search.ts` for the embedding functionality:
+- [ ] Add imports to `src/app/search.ts` for the embedding functionality.
 
 ```typescript
 // src/app/search.ts
+// ADDED: Import embedding functions
 import { embedMany } from 'ai';
 import { google } from '@ai-sdk/google';
 ```
 
-#### Setting up cache constants and helpers
+#### Setting up cache configuration
 
-- [ ] Add cache configuration constants and a helper function to get the embedding file path:
+- [ ] Add cache configuration constants and a helper function to get the embedding file path.
 
 <Spoiler>
 
 ```typescript
 // src/app/search.ts
-
+// ADDED: Cache configuration for embeddings
 const CACHE_DIR = path.join(process.cwd(), 'data', 'embeddings');
 
 const CACHE_KEY = 'google-text-embedding-004';
@@ -207,15 +218,15 @@ const getEmbeddingFilePath = (id: string) =>
 
 </Spoiler>
 
-#### Implementing the `loadOrGenerateEmbeddings` function
+#### Implementing `loadOrGenerateEmbeddings`
 
-- [ ] Create the `loadOrGenerateEmbeddings` function that loads cached embeddings or generates new ones. It should take in a list of emails and return a list of email IDs and their embeddings.
+- [ ] Create a function that loads cached embeddings or generates new ones in batches.
 
 <Spoiler>
 
 ```typescript
 // src/app/search.ts
-
+// ADDED: Load embeddings from cache or generate new ones
 export async function loadOrGenerateEmbeddings(
   emails: Email[],
 ): Promise<{ id: string; embedding: number[] }[]> {
@@ -281,12 +292,13 @@ export async function loadOrGenerateEmbeddings(
 
 </Spoiler>
 
-#### Updating the search page to use embeddings
+#### Calling embeddings on page load
 
-- [ ] Update the imports in `src/app/search/page.tsx`:
+- [ ] Update imports in `src/app/search/page.tsx` to include `loadOrGenerateEmbeddings`.
 
 ```typescript
 // src/app/search/page.tsx
+// ADDED: Import embedding function
 import {
   loadEmails,
   loadOrGenerateEmbeddings,
@@ -294,13 +306,13 @@ import {
 } from '../search';
 ```
 
-- [ ] Call `loadOrGenerateEmbeddings` on page load to generate and cache embeddings:
+- [ ] Call `loadOrGenerateEmbeddings` on page load to generate and cache embeddings.
 
 <Spoiler>
 
 ```typescript
 // src/app/search/page.tsx
-
+// ADDED: Generate and cache embeddings on page load
 const allEmails = await loadEmails();
 
 const embeddings = await loadOrGenerateEmbeddings(allEmails);
@@ -312,17 +324,18 @@ console.log('Email embeddings loaded:', embeddings.length);
 
 #### Testing
 
-- [ ] Run the development server and navigate to `/search`:
+- [ ] Run the development server and navigate to `/search`.
 
 ```bash
+# Terminal
 pnpm dev
 ```
 
-- [ ] You should see embeddings being generated for all emails on first load, with console logs showing batch progress.
+- [ ] On first load, you'll see console logs showing batch progress as embeddings are generated.
 
-- [ ] Refresh the page—embeddings should now load from cache instantly without regenerating.
+- [ ] Refresh the page—embeddings should load from cache instantly without regenerating.
 
-## Embeddings Search
+## Searching with Embeddings
 
 <!-- VIDEO -->
 
@@ -332,19 +345,23 @@ Let's implement semantic search using embeddings and cosine similarity.
 
 #### Updating imports in `search.ts`
 
-- [ ] Update the imports in `src/app/search.ts` to include `embed` and `cosineSimilarity` from the `ai` package
+- [ ] Update the imports in `src/app/search.ts` to include `embed` and `cosineSimilarity`.
 
 ```typescript
+// src/app/search.ts
+// CHANGED: Add new AI functions
 import { embed, embedMany, cosineSimilarity } from 'ai';
 ```
 
-#### Creating the `searchWithEmbeddings` function
+#### Creating `searchWithEmbeddings`
 
-- [ ] Add a new `searchWithEmbeddings` function to `src/app/search.ts` that takes a query string and list of emails
+- [ ] Add a new function to search emails using semantic similarity.
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
+// ADDED: Semantic search using embeddings and cosine similarity
 export async function searchWithEmbeddings(
   query: string,
   emails: Email[],
@@ -376,17 +393,21 @@ export async function searchWithEmbeddings(
 
 #### Updating the search page
 
-- [ ] Update the imports in `src/app/search/page.tsx` to import `searchWithEmbeddings` instead of `searchWithBM25`
+- [ ] Update the import in `src/app/search/page.tsx` to use `searchWithEmbeddings` instead of `searchWithBM25`.
 
 ```typescript
+// src/app/search/page.tsx
+// CHANGED: Import embeddings search instead of BM25
 import { loadEmails, searchWithEmbeddings } from '../search';
 ```
 
-- [ ] Remove the line that loads embeddings manually and replace the BM25 search call with `searchWithEmbeddings`
+- [ ] Replace the BM25 search call with `searchWithEmbeddings`.
 
 <Spoiler>
 
 ```typescript
+// src/app/search/page.tsx
+// CHANGED: Use embeddings search instead of BM25
 const emailsWithScores = await searchWithEmbeddings(
   query,
   allEmails,
@@ -397,31 +418,35 @@ const emailsWithScores = await searchWithEmbeddings(
 
 #### Testing semantic search
 
-- [ ] Run the development server and test with semantic queries like "really nice email about climbing"
+- [ ] Run the development server and test with semantic queries like "really nice email about climbing".
 
 ```bash
+# Terminal
 pnpm dev
 ```
 
-- [ ] You should see emails ranked by semantic relevance, even if they don't contain exact keyword matches
+- [ ] You should see emails ranked by semantic relevance, even without exact keyword matches.
 
-## Adding RRF Search
+## Combining Results with Reciprocal Rank Fusion
 
 <!-- VIDEO -->
 
-Let's implement Reciprocal Rank Fusion (RRF), a rank fusion algorithm that combines BM25 and embeddings search results using position-based scoring.
+Let's implement Reciprocal Rank Fusion (RRF), a rank fusion algorithm that combines BM25 and embeddings results using position-based scoring.
 
 ### Steps To Complete
 
-#### Creating the Reciprocal Rank Fusion function
+#### Creating the RRF function
 
-- [ ] In `src/app/search.ts`, add a constant for the RRF parameter and implement the `reciprocalRankFusion` function that combines multiple ranking lists using position-based scoring.
+- [ ] In `src/app/search.ts`, add the RRF constant and implement the fusion function.
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
+// ADDED: RRF parameter for rank fusion
 const RRF_K = 60;
 
+// ADDED: Combines multiple ranking lists using position-based scoring
 export function reciprocalRankFusion(
   rankings: { email: Email; score: number }[][],
 ): { email: Email; score: number }[] {
@@ -453,13 +478,15 @@ export function reciprocalRankFusion(
 
 </Spoiler>
 
-#### Creating the `searchWithRRF` function
+#### Creating `searchWithRRF`
 
-- [ ] In `src/app/search.ts`, add a `searchWithRRF` function that combines BM25 and embeddings rankings using reciprocal rank fusion.
+- [ ] Add a function that combines BM25 and embeddings rankings using RRF.
 
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
+// ADDED: Combines BM25 and embeddings search using RRF
 export const searchWithRRF = async (
   query: string,
   emails: Email[],
@@ -482,11 +509,13 @@ export const searchWithRRF = async (
 
 </Spoiler>
 
-#### Updating the search page import
+#### Updating the search page
 
-- [ ] In `src/app/search/page.tsx`, update the import to include the new `searchWithRRF` function.
+- [ ] Update the import in `src/app/search/page.tsx` to include `searchWithRRF`.
 
 ```typescript
+// src/app/search/page.tsx
+// CHANGED: Import RRF search function
 import {
   loadEmails,
   searchWithEmbeddings,
@@ -494,13 +523,13 @@ import {
 } from '../search';
 ```
 
-#### Using RRF in the search page
-
-- [ ] In `src/app/search/page.tsx`, replace the call to `searchWithEmbeddings` with `searchWithRRF`.
+- [ ] Replace `searchWithEmbeddings` with `searchWithRRF` to use combined results.
 
 <Spoiler>
 
 ```typescript
+// src/app/search/page.tsx
+// CHANGED: Use RRF search combining BM25 and embeddings
 const emailsWithScores = await searchWithRRF(query, allEmails);
 ```
 
@@ -508,12 +537,13 @@ const emailsWithScores = await searchWithRRF(query, allEmails);
 
 #### Testing
 
-- [ ] Start the development server to test your changes.
+- [ ] Run the development server to test your changes.
 
 ```bash
+# Terminal
 pnpm dev
 ```
 
-- [ ] Navigate to the search page and try searching for a query (like "climbing").
+- [ ] Navigate to the search page and search for a query like "climbing".
 
-- [ ] Verify that results now combine both BM25 and embeddings rankings, producing a fused set of results that leverage both search methods.
+- [ ] Verify that results combine both BM25 and embeddings rankings for improved relevance.

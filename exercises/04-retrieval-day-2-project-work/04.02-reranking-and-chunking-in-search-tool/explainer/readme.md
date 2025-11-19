@@ -4,11 +4,12 @@ First, you'll add a reranker to improve how your agent selects tools. Then you'l
 
 These changes will make your agent more thoughtful about its decisions and easier to debug when things go wrong.
 
-## Adding The Reranker
+## Adding the Reranker
 
 <!-- VIDEO -->
 
-We're going to add a reranker to filter the search results using an LLM before returning them to the user.
+We're going to add a reranker to filter search results using
+an LLM before returning them to the user.
 
 ### Steps To Complete
 
@@ -45,7 +46,7 @@ export const rerankEmails = async (
 
 #### Implement the reranker logic
 
-- [ ] Now implement the reranker function to map results with IDs, call the LLM, and return filtered results. This should feel familiar from the skill building exercise.
+- [ ] Implement the reranker function to map results with IDs, call the LLM, and return filtered results. This should feel familiar from the skill building exercise.
 
 <Spoiler>
 
@@ -64,6 +65,7 @@ export const rerankEmails = async (
     resultsWithId.map((result) => [result.id, result]),
   );
 
+  // ADDED: Call reranker LLM
   const rerankedResults = await generateObject({
     model: google('gemini-2.5-flash-lite'),
     system: `You are a search result reranker. Your job is to analyze a list of email chunks and return only the IDs of the most relevant chunks for answering the user's question.
@@ -133,8 +135,9 @@ const NUMBER_PASSED_TO_RERANKER = 30;
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
 const rrfResults = reciprocalRankFusion([
-  // Only take the top NUMBER_PASSED_TO_RERANKER results from each search
+  // CHANGED: Only take the top NUMBER_PASSED_TO_RERANKER results
   bm25Results.slice(0, NUMBER_PASSED_TO_RERANKER),
   embeddingResults.slice(0, NUMBER_PASSED_TO_RERANKER),
 ]);
@@ -147,7 +150,8 @@ const rrfResults = reciprocalRankFusion([
 <Spoiler>
 
 ```typescript
-// Rerank results using LLM
+// src/app/api/chat/search-tool.ts
+// CHANGED: Rerank results using LLM
 const query = [keywords?.join(' '), searchQuery]
   .filter(Boolean)
   .join(' ');
@@ -200,6 +204,8 @@ import { convertToModelMessages, tool, UIMessage } from 'ai';
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
+// CHANGED: Convert searchTool to a function that accepts messages
 export const searchTool = (messages: UIMessage[]) =>
   tool({
     description:
@@ -226,14 +232,15 @@ export const searchTool = (messages: UIMessage[]) =>
 
 </Spoiler>
 
-#### Pass conversation history to the re-ranker
+#### Pass conversation history to the reranker
 
 - [ ] Inside the `execute` function, after getting the RRF results, extract the conversation history by converting UI messages to model messages and filtering for user and assistant roles only.
 
 <Spoiler>
 
 ```typescript
-// Get conversation history without the tool calls
+// src/app/api/chat/search-tool.ts
+// ADDED: Get conversation history without the tool calls
 const conversationHistory = convertToModelMessages(
   messages,
 ).filter((m) => m.role === 'user' || m.role === 'assistant');
@@ -246,10 +253,11 @@ const conversationHistory = convertToModelMessages(
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
 const rerankedResults = await rerankEmails(
   rrfResults.slice(0, NUMBER_PASSED_TO_RERANKER),
   query,
-  conversationHistory,
+  conversationHistory, // ADDED: Pass conversation history
 );
 ```
 
@@ -257,7 +265,7 @@ const rerankedResults = await rerankEmails(
 
 #### Update the `rerankEmails` function signature
 
-- [ ] In `src/app/rerank.ts`, update the function to accept `conversationHistory` as a parameter:
+- [ ] In `src/app/rerank.ts`, update the function to accept `conversationHistory` as a parameter.
 
 Import `ModelMessage`:
 
@@ -268,22 +276,26 @@ import { generateObject, ModelMessage } from 'ai';
 <Spoiler>
 
 ```typescript
+// src/app/rerank.ts
+// CHANGED: Add conversationHistory parameter
 export const rerankEmails = async (
   results: ResultWithEmail[],
   query: string,
-  conversationHistory: ModelMessage[]
+  conversationHistory: ModelMessage[],
 ): Promise<ResultWithEmail[]> => {
 ```
 
 </Spoiler>
 
-#### Use conversation history in the re-ranker prompt
+#### Use conversation history in the reranker prompt
 
-- [ ] Change the `rerankEmails` function from using a `prompt` field to using `messages` array that includes the conversation history:
+- [ ] Change the `rerankEmails` function from using a `prompt` field to using `messages` array that includes the conversation history.
 
 <Spoiler>
 
 ```typescript
+// src/app/rerank.ts
+// CHANGED: Use messages array instead of prompt field
 const rerankedResults = await generateObject({
   model: google('gemini-2.5-flash-lite'),
   system: `You are a search result reranker. Your job is to analyze a list of email chunks and return only the IDs of the most relevant chunks for answering the user's question.
@@ -330,11 +342,13 @@ Return the IDs as a simple array of numbers.`,
 
 #### Pass messages to searchTool in the route
 
-- [ ] In `src/app/api/chat/route.ts`, update the tools object to call `searchTool` as a function, passing in the `messages` array:
+- [ ] In `src/app/api/chat/route.ts`, update the tools object to call `searchTool` as a function, passing in the `messages` array
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
+// CHANGED: Call searchTool as a function with messages
 tools: {
   search: searchTool(messages),
 },
@@ -367,11 +381,13 @@ import {
 } from 'ai';
 ```
 
-- [ ] Update the `MyMessage` type to include tool types using `InferUITools`:
+- [ ] Update the `MyMessage` type to include tool types using `InferUITools`
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
+// CHANGED: Add tool type inference
 export type MyMessage = UIMessage<
   never,
   {
@@ -383,11 +399,13 @@ export type MyMessage = UIMessage<
 
 </Spoiler>
 
-- [ ] Create a `getTools` function that accepts messages and returns the tools object:
+- [ ] Create a `getTools` function that accepts messages and returns the tools object
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
+// ADDED: Create getTools function
 const getTools = (messages: UIMessage[]) => ({
   search: searchTool(messages),
 });
@@ -395,11 +413,13 @@ const getTools = (messages: UIMessage[]) => ({
 
 </Spoiler>
 
-- [ ] Update the `streamText` call to use `getTools(messages)` instead of defining tools inline:
+- [ ] Update the `streamText` call to use `getTools(messages)` instead of defining tools inline
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
+// CHANGED: Use getTools function
 const result = await streamText({
   model: google('gemini-2.0-flash-exp'),
   system: `...`,
@@ -413,11 +433,13 @@ const result = await streamText({
 
 #### Add email metadata to search results
 
-- [ ] In `src/app/api/chat/search-tool.ts`, update the returned email objects to include `from` and `to` fields:
+- [ ] In `src/app/api/chat/search-tool.ts`, update the returned email objects to include `from` and `to` fields
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
+// CHANGED: Add from and to fields to email objects
 const topEmails = rerankedResults.map((r) => ({
   id: r.email.id,
   subject: r.email.subject,
@@ -454,7 +476,9 @@ import { Button } from '@/components/ui/button';
 
 <Spoiler>
 
-```typescript
+```tsx
+// src/app/chat.tsx
+// ADDED: Display tool-search case
 case "tool-search":
   return (
     <Tool
@@ -523,6 +547,8 @@ case "tool-search":
 <Spoiler>
 
 ```typescript
+// src/app/chat.tsx
+// ADDED: EmailResultsGrid component
 const EmailResultsGrid = ({
   emails,
 }: {
@@ -585,6 +611,8 @@ const EmailResultsGrid = ({
 <Spoiler>
 
 ```typescript
+// src/app/rerank.ts
+// CHANGED: Use EmailChunk type
 import { EmailChunk } from './search';
 
 type ResultWithEmail = {

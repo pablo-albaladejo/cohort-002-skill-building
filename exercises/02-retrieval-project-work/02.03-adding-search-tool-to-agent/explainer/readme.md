@@ -14,7 +14,7 @@ Let's implement a search tool that the AI agent can use to answer questions by s
 
 #### Creating the search tool file
 
-- [ ] Create a new file `src/app/api/chat/search-tool.ts` and set up the basic imports:
+- [ ] Create a new file `src/app/api/chat/search-tool.ts` with the basic imports:
 
 ```typescript
 // src/app/api/chat/search-tool.ts
@@ -35,6 +35,7 @@ import { z } from 'zod';
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
 export const searchTool = tool({
   description:
     'Search emails using both keyword and semantic search. Returns most relevant emails ranked by reciprocal rank fusion.',
@@ -64,6 +65,7 @@ export const searchTool = tool({
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
 export const searchTool = tool({
   description:
     'Search emails using both keyword and semantic search. Returns most relevant emails ranked by reciprocal rank fusion.',
@@ -81,18 +83,21 @@ export const searchTool = tool({
       )
       .optional(),
   }),
+  // ADDED: Execute function to run the search
   execute: async ({ keywords, searchQuery }) => {
     console.log('Keywords:', keywords);
     console.log('Search query:', searchQuery);
 
     const emails = await loadEmails();
 
+    // ADDED: Perform BM25 and embedding searches
     const bm25Results = keywords
       ? await searchWithBM25(keywords, emails)
       : [];
     const embeddingResults = searchQuery
       ? await searchWithEmbeddings(searchQuery, emails)
       : [];
+    // ADDED: Combine results using reciprocal rank fusion
     const rrfResults = reciprocalRankFusion([
       bm25Results.slice(0, 30),
       embeddingResults.slice(0, 30),
@@ -110,13 +115,16 @@ export const searchTool = tool({
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/search-tool.ts
 execute: async ({ keywords, searchQuery }) => {
-  console.log("Keywords:", keywords);
-  console.log("Search query:", searchQuery);
+  console.log('Keywords:', keywords);
+  console.log('Search query:', searchQuery);
 
   const emails = await loadEmails();
 
-  const bm25Results = keywords ? await searchWithBM25(keywords, emails) : [];
+  const bm25Results = keywords
+    ? await searchWithBM25(keywords, emails)
+    : [];
   const embeddingResults = searchQuery
     ? await searchWithEmbeddings(searchQuery, emails)
     : [];
@@ -125,6 +133,7 @@ execute: async ({ keywords, searchQuery }) => {
     embeddingResults.slice(0, 30),
   ]);
 
+  // ADDED: Filter and map top results
   const topEmails = rrfResults
     .slice(0, 10)
     .filter((r) => r.score > 0)
@@ -148,9 +157,10 @@ execute: async ({ keywords, searchQuery }) => {
 
 #### Updating the chat route
 
-- [ ] Import the `searchTool`, `stepCountIs`, and update the imports in `src/app/api/chat/route.ts`:
+- [ ] Import the `searchTool` and `stepCountIs` in `src/app/api/chat/route.ts`:
 
 ```typescript
+// src/app/api/chat/route.ts
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -160,23 +170,29 @@ import {
   streamText,
   UIMessage,
 } from 'ai';
+// ADDED: Import the search tool
 import { searchTool } from './search-tool';
 ```
 
-- [ ] Update the model from `gemini-2.5-flash-lite` to `gemini-2.5-flash`:
+- [ ] Update the `streamText` configuration to use the search tool and `gemini-2.5-flash`:
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
 const result = streamText({
+  // CHANGED: Updated model from gemini-2.5-flash-lite
   model: google('gemini-2.5-flash'),
   messages: convertToModelMessages(messages),
+  // ADDED: Add system prompt directing agent to use search
   system: `
     Use your search tool to answer questions.
   `,
+  // ADDED: Add the search tool to available tools
   tools: {
     search: searchTool,
   },
+  // ADDED: Stop after 10 steps to prevent infinite loops
   stopWhen: [stepCountIs(10)],
 });
 ```
@@ -190,6 +206,7 @@ const result = streamText({
 <Spoiler>
 
 ```typescript
+// src/app/search.ts
 export async function searchWithEmbeddings(
   query: string,
   emails: Email[],
@@ -207,6 +224,7 @@ export async function searchWithEmbeddings(
     return { score, email };
   });
 
+  // DELETED: Removed console.log("Results:", results.length);
   return results.sort((a, b) => b.score - a.score);
 }
 ```
@@ -215,32 +233,38 @@ export async function searchWithEmbeddings(
 
 #### Testing the search tool
 
-- [ ] Run your application and test by asking the AI agent a question like "What are Sarah's hobbies?"
+- [ ] Run your application and test by asking the AI agent a question:
 
 ```bash
 pnpm dev
 ```
 
-- [ ] The agent should use the search tool to find relevant emails and provide an answer based on the search results.
+- [ ] Try asking "What are Sarah's hobbies?" in the chat.
+
+The agent will use the search tool to find relevant emails and provide an answer based on the results.
+
+---
 
 ## Context Engineering Search Tool
 
 <!-- VIDEO -->
 
-Let's enhance the system prompt for our email assistant agent with better structure and anti-hallucination guardrails.
+Let's improve the system prompt for your email assistant. Better structure and clear anti-hallucination guardrails will help the agent use the search tool effectively.
 
 ### Steps To Complete
 
-#### Restructuring the System Prompt
+#### Restructuring the system prompt
 
-- [ ] Replace the simple system prompt with a structured prompt that includes task context, rules, and the ask
+- [ ] Replace the simple system prompt with a structured prompt including context, rules, and instructions:
 
 <Spoiler>
 
 ```typescript
+// src/app/api/chat/route.ts
 const result = streamText({
   model: google('gemini-2.5-flash'),
   messages: convertToModelMessages(messages),
+  // CHANGED: Restructured system prompt with clear sections
   system: `
 <task-context>
 You are an email assistant that helps users find and understand information from their emails.
@@ -267,8 +291,14 @@ Here is the user's question. Search their emails first, then provide your answer
 
 </Spoiler>
 
-#### Testing the Changes
+#### Testing the changes
 
-- [ ] Test the agent with a query like "what house did Sarah buy?" to verify it searches the emails and uses the cheaper model effectively
+- [ ] Test the agent with a query like "what house did Sarah buy?":
 
-The improved prompt structure should now allow the agent to work reliably with the cheaper `gemini-2.5-flash-lite` model by providing clearer instructions about when to use the search tool.
+```bash
+pnpm dev
+```
+
+- [ ] Verify the agent searches the emails and provides accurate results based on what it finds.
+
+The improved prompt structure enables the agent to work reliably while preventing hallucinations by enforcing tool usage.

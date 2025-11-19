@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@types/papaparse": "^5.3.16",
-    "ai-hero-cli": "^0.2.7",
+    "ai-hero-cli": "^0.2.8",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "tailwind-scrollbar": "^4.0.2",

@@ -1,6 +1,6 @@
 Right now, your algorithm can handle emails just fine - but only if they're reasonably short. Longer emails can become problematic, especially when you're trying to process them with an LLM.
 
-The solution is to add chunking. Instead of sending the entire email at once, you'll break it into smaller, manageable pieces. This is where a [structure-aware text splitter](/PLACEHOLDER/recursive-character-text-splitter) comes in handy.
+The solution is to add chunking. Instead of sending the entire email at once, you'll break it into smaller, manageable pieces. This is where a structure-aware text splitter comes in handy.
 
 By using a structure-aware approach, you can split your text intelligently - respecting paragraph boundaries rather than cutting through the middle of sentences or ideas. This keeps your processing clean and meaningful.
 

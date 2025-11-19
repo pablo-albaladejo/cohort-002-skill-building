@@ -1,8 +1,8 @@
 As your personal assistant gains more tools, you'll run into a scaling problem. Each tool added to your `system` prompt increases the number of tokens used on every request, and eventually the LLM struggles to choose between too many options.
 
-There are several ways to solve this - [sub-agents](/PLACEHOLDER/agent-sub-agents), [code execution environments](/PLACEHOLDER/code-execution-environments), or smart UX design. The most practical approach right now? Let users explicitly opt into tool groups.
+There are several ways to solve this - sub-agents, code execution environments, or smart UX design. The most practical approach right now? Let users explicitly opt into tool groups.
 
-Instead of overwhelming your agent with every possible tool, you can organize them by category - calendar tools, task tools, email tools - and only tell the LLM about the ones the user actually wants to use. This is exactly what [ChatGPT's "chat with your apps"](/PLACEHOLDER/chatgpt-chat-with-apps) feature does. It's elegant UX that solves a real scaling problem.
+Instead of overwhelming your agent with every possible tool, you can organize them by category - calendar tools, task tools, email tools - and only tell the LLM about the ones the user actually wants to use. This is exactly what ChatGPT's "chat with your apps" feature does. It's elegant UX that solves a real scaling problem.
 
 ## Adding Types and Helper Functions
 

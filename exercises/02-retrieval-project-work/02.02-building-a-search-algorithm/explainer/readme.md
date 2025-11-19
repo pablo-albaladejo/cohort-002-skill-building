@@ -2,7 +2,7 @@ Right now, the search page in your app has a very basic search algorithm. It jus
 
 But search is one of the most important features in any application. A dumb search makes users frustrated. A smart search makes them happy.
 
-Over the next few exercises, you're going to transform this basic search into something powerful. You'll implement [BM25](/PLACEHOLDER/bm25-algorithm), [embeddings](/PLACEHOLDER/embeddings-concept), and [re-ranking](/PLACEHOLDER/reranking-concept) to make the search truly intelligent.
+Over the next few exercises, you're going to transform this basic search into something powerful. You'll implement BM25, embeddings, and re-ranking to make the search truly intelligent.
 
 ## Adding BM25 Search
 

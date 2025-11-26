@@ -1,5 +1,70 @@
 # Workshop Goals
 
+## Section 00: Before We Start
+
+**Learning Goals:**
+
+- Understand course structure and what you'll build
+- Navigate skill-building vs project-work repos effectively
+- Configure development environment and obtain API keys
+- Complete prerequisite knowledge before starting exercises
+
+### [00.01 - Course Overview](./exercises/00-before-we-start/00.01-course-overview/explainer/readme.md) (Explainer)
+
+- What you'll build: personal AI assistant with retrieval, memory, HITL
+- Course architecture: 10 sections covering retrieval, memory, evals, HITL
+- End-to-end learning path from fundamentals to production patterns
+- Skill progression: techniques → application → testing → deployment
+
+### [00.02 - Skill Building vs Project](./exercises/00-before-we-start/00.02-skill-building-vs-project/explainer/readme.md) (Explainer)
+
+- Skill building: problem/solution/explainer format for techniques
+- Project work: apply skills to real assistant codebase
+- Alternating pattern: learn technique → build feature
+- Repo structure: separate skill-building vs project-work repos
+
+### [00.03 - How to do the Skill-Building Exercises](./exercises/00-before-we-start/00.03-how-to-do-skill-building-exercises/explainer/readme.md) (Explainer)
+
+- Problem/solution/explainer variant structure
+- Using `pnpm dev` and `pnpm exercise` commands
+- AI Hero CLI for exercise navigation
+- How to work through problem exercises with TODOs
+
+### [00.04 - Project Repo Intro](./exercises/00-before-we-start/00.04-project-repo-intro/explainer/readme.md) (Explainer)
+
+- Project repo overview and architecture
+- Tech stack: AI SDK v5, React 19, Hono, TypeScript
+- Directory structure: persistence, tools, routes
+- What you'll build incrementally throughout project sections
+
+### [00.05 - How to do the Project Exercises](./exercises/00-before-we-start/00.05-how-to-do-project-exercises/explainer/readme.md) (Explainer)
+
+- Recommendation system via CLI in project work
+- How to navigate project exercises vs skill-building
+- Running project dev server
+- Where completed features integrate
+
+### [00.06 - Getting Model Keys](./exercises/00-before-we-start/00.06-getting-model-keys/explainer/readme.md) (Explainer)
+
+- Required API keys: Google Gemini, OpenAI, Anthropic
+- How to obtain keys from each provider
+- Setting up `.env` file from `.env.example`
+- Cost expectations and free tier info
+
+### [00.07 - Introduction to the Discord](./exercises/00-before-we-start/00.07-introduction-to-discord/explainer/readme.md) (Explainer)
+
+- Channel structure and where to ask questions
+- Skill-building vs project-work channels
+- Getting help from instructors and peers
+- Sharing progress and solutions
+
+### [00.08 - What to do Now](./exercises/00-before-we-start/00.08-what-to-do-now/explainer/readme.md) (Explainer)
+
+- Recommended: complete AI SDK v5 Crash Course first
+- TypeScript fundamentals needed
+- React basics for project work
+- Node.js and pnpm installation
+
 ## Section 01: Retrieval Skill Building
 
 **Learning Goals:**

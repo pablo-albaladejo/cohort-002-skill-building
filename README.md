@@ -1,5 +1,8 @@
 # Build a Personal Assistant in TypeScript
 
+[![personal-assistant-github@2x](https://github.com/user-attachments/assets/6b7f0ddb-2f74-4bbf-817a-c2c20a67a246)](https://www.aihero.dev/cohorts/build-your-own-ai-personal-assistant-in-typescript)
+
+
 Repository for the [5-day cohort course](https://www.aihero.dev/cohorts/build-your-own-ai-personal-assistant-in-typescript) on building production AI systems with retrieval, memory, evals, and human-in-the-loop patterns.
 
 ## Prerequisites

@@ -44,13 +44,13 @@ Look for functions like `loadChats()`, `saveChats()`, and `createChats()`. These
 
 This is the most important file in the codebase. The `POST` function here is where most of your work will happen.
 
-- [ ] Find the [`createUIMessageStream()`](/PLACEHOLDER/create-ui-message-stream) wrapper
+- [ ] Find the `createUIMessageStream()` wrapper
 
 This handles generating chat titles, appending messages, and persisting data.
 
-- [ ] Locate the [`streamText()`](/PLACEHOLDER/stream-text) call
+- [ ] Locate the `streamText()` call
 
-This is where the LLM generates responses and writes them to the UI message stream. Currently using [Gemini 2.5 Flash](/PLACEHOLDER/gemini-2-5-flash), but you can switch models here.
+This is where the LLM generates responses and writes them to the UI message stream. Currently using Gemini 2.5 Flash, but you can switch models here.
 
 ### Understand the Component Architecture
 
@@ -58,7 +58,7 @@ This is where the LLM generates responses and writes them to the UI message stre
 
 Review the sidebar component, top bar component, and chat component to see how the interface is structured.
 
-- [ ] Check how the [`useChat()`](/PLACEHOLDER/use-chat) hook is being used
+- [ ] Check how the `useChat()` hook is being used
 
 This hook manages chat state and persistence - it's what you learned about in the AI SDK crash course.
 
@@ -66,7 +66,7 @@ This hook manages chat state and persistence - it's what you learned about in th
 
 - [ ] Open the persistence layer functions (look for `loadChats`, `saveChats`, etc.)
 
-Understand that these currently use JSON file operations, but could easily be swapped out for [Postgres](/PLACEHOLDER/postgres) or similar in production.
+Understand that these currently use JSON file operations, but could easily be swapped out for [Postgres](https://www.postgresql.org/) or similar in production.
 
 - [ ] Note what would need to change to move to a real database
 

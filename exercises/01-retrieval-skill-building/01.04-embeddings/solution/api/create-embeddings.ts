@@ -123,7 +123,9 @@ export const searchEmails = async (query: string) => {
     );
   }
   const emails = await loadEmails();
-  const emailsMap = new Map(emails.map((email) => [email.id, email]));
+  const emailsMap = new Map(
+    emails.map((email) => [email.id, email]),
+  );
 
   const queryEmbedding = await embedOnePieceOfText(query);
 
@@ -151,7 +153,9 @@ const embedLotsOfText = async (
 > => {
   const result = await embedMany({
     model: myEmbeddingModel,
-    values: emails.map((email) => `${email.subject} ${email.body}`),
+    values: emails.map(
+      (email) => `${email.subject} ${email.body}`,
+    ),
     maxRetries: 0,
   });
 

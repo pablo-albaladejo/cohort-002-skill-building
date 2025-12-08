@@ -34,7 +34,7 @@ export const loadEmails = async () => {
 export type Embeddings = Record<string, number[]>;
 
 const getExistingEmbeddingsPath = (cacheKey: string) => {
-  return path.resolve(process.cwd(), 'datasets', `${cacheKey}.json`);
+  return path.resolve(process.cwd(), 'data', `${cacheKey}.json`);
 };
 
 const saveEmbeddings = async (
@@ -123,7 +123,9 @@ export const searchEmails = async (query: string) => {
     );
   }
   const emails = await loadEmails();
-  const emailsMap = new Map(emails.map((email) => [email.id, email]));
+  const emailsMap = new Map(
+    emails.map((email) => [email.id, email]),
+  );
 
   const queryEmbedding = await embedOnePieceOfText(query);
 
